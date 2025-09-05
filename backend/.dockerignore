@@ -1,0 +1,10 @@
+node_modules
+.tmp
+coverage
+uploads
+npm-debug.log*
+.git
+Dockerfile
+README.md
+
+
