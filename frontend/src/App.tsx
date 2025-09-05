@@ -1,23 +1,18 @@
-import { Layout, Menu, theme } from 'antd'
+import { Layout, Menu } from 'antd'
 import { Link, RouteObject, useRoutes } from 'react-router-dom'
 import CatalogPage from './features/catalog/CatalogPage'
+import ProductPage from './features/products/pages/ProductPage'
+import AdminPage from './features/admin/AdminPage'
 
 const { Header, Content, Footer } = Layout
 
-function Admin() {
-	return <div>Управление товарами</div>
-}
-
 const routes: RouteObject[] = [
 	{ path: '/', element: <CatalogPage /> },
-	{ path: '/admin', element: <Admin /> },
+	{ path: '/products/:id', element: <ProductPage /> },
+	{ path: '/admin', element: <AdminPage /> },
 ]
 
 export default function App() {
-	const {
-		token: { },
-	} = theme.useToken()
-
 	const element = useRoutes(routes)
 
 	return (

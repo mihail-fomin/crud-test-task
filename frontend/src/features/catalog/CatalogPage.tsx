@@ -1,6 +1,6 @@
 import { Input, Select, Space, Table } from 'antd'
 import { useMemo } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useCatalogQuery } from './hooks'
 
 export default function CatalogPage() {
@@ -18,6 +18,7 @@ export default function CatalogPage() {
 				title: 'Название',
 				dataIndex: 'name',
 				key: 'name',
+				render: (_: any, row: any) => <Link to={`/products/${row.id}`}>{row.name}</Link>,
 			},
 			{
 				title: 'Цена',
