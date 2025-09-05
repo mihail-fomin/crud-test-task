@@ -3,9 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { promises as fs } from 'fs';
 import { join } from 'path';
-import { Product } from './products/product.entity.js';
-import { CreateProductDto } from './products/dto/create-product.dto.js';
-import { UpdateProductDto } from './products/dto/update-product.dto.js';
+import { Product } from './product.entity.js';
+import { CreateProductDto } from './dto/create-product.dto.js';
+import { UpdateProductDto } from './dto/update-product.dto.js';
 
 @Injectable()
 export class ProductsService {
@@ -61,7 +61,7 @@ export class ProductsService {
     if (item.photoUrl) {
       const filename = item.photoUrl.split('/').pop();
       if (filename) {
-        const filepath = join(__dirname, '..', 'uploads', filename);
+        const filepath = join(__dirname, '..', '..', 'uploads', filename);
         await fs.unlink(filepath).catch(() => undefined);
       }
     }

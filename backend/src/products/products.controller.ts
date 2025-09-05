@@ -16,8 +16,8 @@ import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { randomUUID } from 'crypto';
 import { ProductsService } from './products.service.js';
-import { CreateProductDto } from './products/dto/create-product.dto.js';
-import { UpdateProductDto } from './products/dto/update-product.dto.js';
+import { CreateProductDto } from './dto/create-product.dto.js';
+import { UpdateProductDto } from './dto/update-product.dto.js';
 
 @Controller('products')
 export class ProductsController {
@@ -60,7 +60,7 @@ export class ProductsController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
-        destination: join(__dirname, '..', 'uploads'),
+        destination: join(__dirname, '..', '..', 'uploads'),
         filename: (_req, file, cb) => {
           const filename = `${randomUUID()}${extname(file.originalname)}`;
           cb(null, filename);

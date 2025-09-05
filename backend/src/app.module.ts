@@ -1,9 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ProductsModule } from './products.module';
-import { ProductsService } from './products.service';
-import { ProductsController } from './products.controller';
+import { ProductsModule } from './products/products.module.js';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ServeStaticModule } from '@nestjs/serve-static';
@@ -30,7 +28,7 @@ import { join } from 'path';
     }),
     ProductsModule,
   ],
-  controllers: [AppController, ProductsController],
-  providers: [AppService, ProductsService],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}
