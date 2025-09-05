@@ -1,9 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, ILike } from 'typeorm';
-import { Product } from './products/product.entity';
-import { CreateProductDto } from './products/dto/create-product.dto';
-import { UpdateProductDto } from './products/dto/update-product.dto';
+import { Repository } from 'typeorm';
+import { promises as fs } from 'fs';
+import { join } from 'path';
+import { Product } from './products/product.entity.js';
+import { CreateProductDto } from './products/dto/create-product.dto.js';
+import { UpdateProductDto } from './products/dto/update-product.dto.js';
 
 @Injectable()
 export class ProductsService {
@@ -27,39 +29,44 @@ export class ProductsService {
     maxPrice?: number;
   }): Promise<{ data: Product[]; total: number; page: number; limit: number }>{
     const page = Math.max(1, Number(params.page || 1));
-    const limit = Math.max(1, Math.min(100, Number(params.limit || 10)));
-    const skip = (page - 1) * limit;
+    const limit = Math.max(1, Math.min(100, Number(params.limit || 12)));
 
-    const where: FindOptionsWhere<Product>[] = [];
+    const qb = this.productRepo.createQueryBuilder('p');
+
     if (params.q) {
-      where.push({ name: ILike(`%${params.q}%`) });
-      where.push({ description: ILike(`%${params.q}%`) });
-      where.push({ sku: ILike(`%${params.q}%`) });
+      qb.andWhere(
+        '(p.name ILIKE :q OR p.description ILIKE :q OR p.sku ILIKE :q)',
+        { q: `%${params.q}%` },
+      );
     }
-
-    const priceFilter: FindOptionsWhere<Product> = {};
-    if (params.minPrice != null) priceFilter.price = (priceFilter.price as any) ?? {};
-    if (params.minPrice != null) (priceFilter.price as any).gte = Number(params.minPrice);
+    if (params.minPrice != null) {
+      qb.andWhere('p.price >= :minPrice', { minPrice: Number(params.minPrice) });
+    }
     if (params.maxPrice != null) {
-      priceFilter.price = (priceFilter.price as any) ?? {};
-      (priceFilter.price as any).lte = Number(params.maxPrice);
+      qb.andWhere('p.price <= :maxPrice', { maxPrice: Number(params.maxPrice) });
     }
 
-    const order: Record<string, 'ASC' | 'DESC'> = {};
-    if (params.sort) {
-      order[params.sort] = (params.order || 'ASC').toUpperCase() as 'ASC' | 'DESC';
-    } else {
-      order['createdAt'] = 'DESC';
-    }
+    const sortField = (params.sort as string) || 'createdAt';
+    const sortOrder = (params.order || 'DESC').toUpperCase() as 'ASC' | 'DESC';
+    qb.orderBy(`p.${sortField}`, sortOrder);
 
-    const [data, total] = await this.productRepo.findAndCount({
-      where: where.length ? where : undefined,
-      order,
-      take: limit,
-      skip,
-    });
+    qb.skip((page - 1) * limit).take(limit);
 
+    const [data, total] = await qb.getManyAndCount();
     return { data, total, page, limit };
+  }
+
+  async clearPhoto(id: number): Promise<Product> {
+    const item = await this.findOne(id);
+    if (item.photoUrl) {
+      const filename = item.photoUrl.split('/').pop();
+      if (filename) {
+        const filepath = join(__dirname, '..', 'uploads', filename);
+        await fs.unlink(filepath).catch(() => undefined);
+      }
+    }
+    item.photoUrl = null;
+    return this.productRepo.save(item);
   }
 
   async findOne(id: number): Promise<Product> {

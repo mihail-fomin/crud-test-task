@@ -15,9 +15,9 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { randomUUID } from 'crypto';
-import { ProductsService } from './products.service';
-import { CreateProductDto } from './products/dto/create-product.dto';
-import { UpdateProductDto } from './products/dto/update-product.dto';
+import { ProductsService } from './products.service.js';
+import { CreateProductDto } from './products/dto/create-product.dto.js';
+import { UpdateProductDto } from './products/dto/update-product.dto.js';
 
 @Controller('products')
 export class ProductsController {
@@ -75,6 +75,6 @@ export class ProductsController {
 
   @Delete(':id/photo')
   async deletePhoto(@Param('id', ParseIntPipe) id: number) {
-    return this.productsService.update(id, { photoUrl: null } as any);
+    return this.productsService.clearPhoto(id);
   }
 }
