@@ -1,49 +1,40 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
 import { Layout, Menu, theme } from 'antd'
-import { Link, Outlet, RouteObject, useRoutes } from 'react-router-dom'
+import { Link, RouteObject, useRoutes } from 'react-router-dom'
+import CatalogPage from './features/catalog/CatalogPage'
 
 const { Header, Content, Footer } = Layout
-
-function Catalog() {
-	return <div>Каталог</div>
-}
 
 function Admin() {
 	return <div>Управление товарами</div>
 }
 
 const routes: RouteObject[] = [
-	{ path: '/', element: <Catalog /> },
+	{ path: '/', element: <CatalogPage /> },
 	{ path: '/admin', element: <Admin /> },
 ]
 
 export default function App() {
 	const {
-		token: { colorBgContainer, borderRadiusLG },
+		token: { },
 	} = theme.useToken()
 
 	const element = useRoutes(routes)
 
 	return (
-		<Layout style={{ minHeight: '100dvh' }}>
-			<Header style={{ display: 'flex', alignItems: 'center' }}>
-				<div style={{ color: 'white', fontWeight: 600, marginRight: 24 }}>Products</div>
+		<Layout className="min-h-screen">
+			<Header className="flex items-center">
+				<div className="text-white font-semibold mr-6">Products</div>
 				<Menu theme="dark" mode="horizontal" selectable={false} items={[
 					{ key: 'catalog', label: <Link to="/">Каталог</Link> },
 					{ key: 'admin', label: <Link to="/admin">Управление</Link> },
 				]} />
 			</Header>
-			<Content style={{ padding: '24px' }}>
-				<div
-					style={{ background: colorBgContainer, padding: 24, borderRadius: borderRadiusLG }}
-				>
+			<Content className="p-6">
+				<div className="bg-white dark:bg-neutral-800 p-6 rounded-lg">
 					{element}
 				</div>
 			</Content>
-			<Footer style={{ textAlign: 'center' }}>Test Task</Footer>
+			<Footer className="text-center">Test Task</Footer>
 		</Layout>
 	)
 }
