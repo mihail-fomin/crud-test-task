@@ -2,34 +2,48 @@ import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
+import { Layout, Menu, theme } from 'antd'
+import { Link, Outlet, RouteObject, useRoutes } from 'react-router-dom'
 
-function App() {
-  const [count, setCount] = useState(0)
+const { Header, Content, Footer } = Layout
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+function Catalog() {
+	return <div>Каталог</div>
 }
 
-export default App
+function Admin() {
+	return <div>Управление товарами</div>
+}
+
+const routes: RouteObject[] = [
+	{ path: '/', element: <Catalog /> },
+	{ path: '/admin', element: <Admin /> },
+]
+
+export default function App() {
+	const {
+		token: { colorBgContainer, borderRadiusLG },
+	} = theme.useToken()
+
+	const element = useRoutes(routes)
+
+	return (
+		<Layout style={{ minHeight: '100dvh' }}>
+			<Header style={{ display: 'flex', alignItems: 'center' }}>
+				<div style={{ color: 'white', fontWeight: 600, marginRight: 24 }}>Products</div>
+				<Menu theme="dark" mode="horizontal" selectable={false} items={[
+					{ key: 'catalog', label: <Link to="/">Каталог</Link> },
+					{ key: 'admin', label: <Link to="/admin">Управление</Link> },
+				]} />
+			</Header>
+			<Content style={{ padding: '24px' }}>
+				<div
+					style={{ background: colorBgContainer, padding: 24, borderRadius: borderRadiusLG }}
+				>
+					{element}
+				</div>
+			</Content>
+			<Footer style={{ textAlign: 'center' }}>Test Task</Footer>
+		</Layout>
+	)
+}
