@@ -1,11 +1,14 @@
 import { Button, Modal, Table, Upload, message } from 'antd'
 import { useMemo, useState } from 'react'
 import { useCatalogQuery } from '../catalog/hooks'
-import { deleteProduct, deleteProductPhoto, uploadProductPhoto } from '../products/api'
+import { createProduct, deleteProduct, deleteProductPhoto, updateProduct, uploadProductPhoto } from '../products/api'
+import { ProductForm, ProductFormValues } from './ProductForm'
 
 export default function AdminPage() {
 	const { data, isLoading, refetch } = useCatalogQuery()
 	const [uploadingId, setUploadingId] = useState<number | null>(null)
+	const [editing, setEditing] = useState<any | null>(null)
+	const [open, setOpen] = useState(false)
 
 	const columns = useMemo(
 		() => [
@@ -45,6 +48,7 @@ export default function AdminPage() {
 				title: 'Действия',
 				render: (_: any, row: any) => (
 					<div className="flex gap-2">
+						<Button onClick={() => { setEditing(row); setOpen(true) }}>Редактировать</Button>
 						<Button danger onClick={() => confirmDelete(row.id, refetch)}>Удалить</Button>
 					</div>
 				),
@@ -54,7 +58,39 @@ export default function AdminPage() {
 	)
 
 	return (
-		<Table rowKey="id" loading={isLoading} columns={columns as any} dataSource={data?.data} />
+		<div className="space-y-3">
+			<div className="flex justify-end">
+				<Button type="primary" onClick={() => { setEditing(null); setOpen(true) }}>Добавить товар</Button>
+			</div>
+			<Table rowKey="id" loading={isLoading} columns={columns as any} dataSource={data?.data} />
+
+			<Modal
+				title={editing ? 'Редактировать товар' : 'Добавить товар'}
+				open={open}
+				destroyOnClose
+				onCancel={() => setOpen(false)}
+				footer={null}
+			>
+				<ProductForm
+					defaultValues={editing || undefined}
+					onSubmit={async (values: ProductFormValues) => {
+						try {
+							if (editing) {
+								await updateProduct(editing.id, values)
+								message.success('Товар обновлён')
+							} else {
+								await createProduct(values)
+								message.success('Товар создан')
+							}
+							setOpen(false)
+							refetch()
+						} catch (e) {
+							message.error('Ошибка сохранения')
+						}
+					}}
+				/>
+			</Modal>
+		</div>
 	)
 }
 
