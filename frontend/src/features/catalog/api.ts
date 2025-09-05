@@ -1,5 +1,5 @@
 import { api } from '../../lib/api'
-import { PaginatedResponse, Product } from '../../types/product'
+import type { PaginatedResponse, Product } from '../../types/product'
 
 export async function fetchProducts(params: {
 	page?: number

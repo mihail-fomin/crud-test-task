@@ -2,7 +2,8 @@ import { Button, Modal, Table, Upload, message } from 'antd'
 import { useMemo, useState } from 'react'
 import { useCatalogQuery } from '../catalog/hooks'
 import { createProduct, deleteProduct, deleteProductPhoto, updateProduct, uploadProductPhoto } from '../products/api'
-import { ProductForm, ProductFormValues } from './ProductForm'
+import { ProductForm } from './ProductForm'
+import type { ProductFormValues } from './ProductForm'
 
 export default function AdminPage() {
 	const { data, isLoading, refetch } = useCatalogQuery()

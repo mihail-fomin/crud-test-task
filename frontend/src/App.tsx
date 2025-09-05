@@ -1,5 +1,6 @@
 import { Layout, Menu } from 'antd'
-import { Link, RouteObject, useRoutes } from 'react-router-dom'
+import { Link, useRoutes } from 'react-router-dom'
+import type { RouteObject } from 'react-router-dom'
 import CatalogPage from './features/catalog/CatalogPage'
 import ProductPage from './features/products/pages/ProductPage'
 import AdminPage from './features/admin/AdminPage'
