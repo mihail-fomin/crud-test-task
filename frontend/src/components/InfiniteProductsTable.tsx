@@ -1,13 +1,14 @@
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
 	createColumnHelper,
 	flexRender,
 	getCoreRowModel,
 	getSortedRowModel,
 	getFilteredRowModel,
-	SortingState,
-	ColumnFiltersState,
 	useReactTable,
+	type SortingState,
+	type ColumnFiltersState,
 } from '@tanstack/react-table'
 import { Button, Input, Space, Upload, message, Modal, Spin } from 'antd'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -27,6 +28,7 @@ export default function InfiniteProductsTable({ onEdit, onView }: InfiniteProduc
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 	const [uploadingId, setUploadingId] = useState<number | null>(null)
 	const queryClient = useQueryClient()
+	const navigate = useNavigate()
 
 	const {
 		data,
@@ -63,7 +65,7 @@ export default function InfiniteProductsTable({ onEdit, onView }: InfiniteProduc
 				cell: ({ getValue, row }) => (
 					<Button 
 						type="link" 
-						onClick={() => onView(row.original)}
+						onClick={() => navigate(`/product/${row.original.id}`)}
 						className="p-0 h-auto text-left font-medium"
 					>
 						{getValue()}

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
 	createColumnHelper,
@@ -6,39 +6,44 @@ import {
 	getCoreRowModel,
 	getSortedRowModel,
 	getFilteredRowModel,
-	getPaginationRowModel,
 	useReactTable,
 	type SortingState,
 	type ColumnFiltersState,
 } from '@tanstack/react-table'
-import { Button, Input, Select, Space, Upload, message, Modal } from 'antd'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { deleteProduct, deleteProductPhoto, uploadProductPhoto } from '../features/products/api'
+import { Button, Input, Space, Upload, message, Modal, Spin } from 'antd'
+import { useMockInfiniteCatalogQuery, useMockDeleteProduct, useMockUploadProductPhoto, useMockDeleteProductPhoto } from '../hooks/useMockData'
 import type { Product } from '../types/product'
 
 const columnHelper = createColumnHelper<Product>()
 
-interface ProductsTableProps {
-	data: Product[]
+interface MockInfiniteProductsTableProps {
 	onEdit: (product: Product) => void
 	onView: (product: Product) => void
 }
 
-export default function ProductsTable({ data, onEdit, onView }: ProductsTableProps) {
+export default function MockInfiniteProductsTable({ onEdit, onView }: MockInfiniteProductsTableProps) {
 	const [sorting, setSorting] = useState<SortingState>([])
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 	const [uploadingId, setUploadingId] = useState<number | null>(null)
-	const queryClient = useQueryClient()
 	const navigate = useNavigate()
 
-	const deleteProductMutation = useMutation({
-		mutationFn: deleteProduct,
-		onSuccess: () => {
-			message.success('Товар удален')
-			queryClient.invalidateQueries({ queryKey: ['catalog'] })
-		},
-		onError: () => message.error('Ошибка удаления товара'),
-	})
+	const {
+		data,
+		fetchNextPage,
+		hasNextPage,
+		isFetchingNextPage,
+		isLoading,
+		error,
+	} = useMockInfiniteCatalogQuery()
+
+	const deleteProductMutation = useMockDeleteProduct()
+	const uploadPhotoMutation = useMockUploadProductPhoto()
+	const deletePhotoMutation = useMockDeleteProductPhoto()
+
+	// Объединяем все страницы в один массив
+	const allProducts = useMemo(() => {
+		return data?.pages.flatMap(page => page.data) || []
+	}, [data])
 
 	const columns = useMemo(
 		() => [
@@ -100,10 +105,12 @@ export default function ProductsTable({ data, onEdit, onView }: ProductsTablePro
 								customRequest={async ({ file, onSuccess, onError }) => {
 									try {
 										setUploadingId(row.original.id)
-										await uploadProductPhoto(row.original.id, file as File)
+										await uploadPhotoMutation.mutateAsync({ 
+											id: row.original.id, 
+											file: file as File 
+										})
 										onSuccess && onSuccess({}, new XMLHttpRequest())
-										message.success('Фото загружено')
-										queryClient.invalidateQueries({ queryKey: ['catalog'] })
+										message.success('Фото загружено (мок)')
 									} catch (e) {
 										onError && onError(new Error('upload failed'))
 										message.error('Ошибка загрузки')
@@ -120,9 +127,8 @@ export default function ProductsTable({ data, onEdit, onView }: ProductsTablePro
 								size="small" 
 								danger
 								onClick={async () => { 
-									await deleteProductPhoto(row.original.id)
-									message.success('Фото удалено')
-									queryClient.invalidateQueries({ queryKey: ['catalog'] })
+									await deletePhotoMutation.mutateAsync(row.original.id)
+									message.success('Фото удалено (мок)')
 								}}
 							>
 								Удалить
@@ -147,6 +153,7 @@ export default function ProductsTable({ data, onEdit, onView }: ProductsTablePro
 							onClick={() => {
 								Modal.confirm({
 									title: 'Удалить товар?',
+									content: 'Это действие нельзя отменить (мок данные)',
 									okText: 'Удалить',
 									okButtonProps: { danger: true },
 									onOk: () => deleteProductMutation.mutate(row.original.id),
@@ -160,11 +167,11 @@ export default function ProductsTable({ data, onEdit, onView }: ProductsTablePro
 				enableResizing: true,
 			}),
 		],
-		[uploadingId, onEdit, onView, deleteProductMutation, queryClient]
+		[uploadingId, onEdit, onView, deleteProductMutation, uploadPhotoMutation, deletePhotoMutation]
 	)
 
 	const table = useReactTable({
-		data,
+		data: allProducts,
 		columns,
 		state: {
 			sorting,
@@ -175,10 +182,33 @@ export default function ProductsTable({ data, onEdit, onView }: ProductsTablePro
 		getCoreRowModel: getCoreRowModel(),
 		getSortedRowModel: getSortedRowModel(),
 		getFilteredRowModel: getFilteredRowModel(),
-		getPaginationRowModel: getPaginationRowModel(),
 		enableColumnResizing: true,
 		columnResizeMode: 'onChange',
 	})
+
+	// Обработчик скролла для загрузки следующей страницы
+	const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+		const { scrollTop, scrollHeight, clientHeight } = e.currentTarget
+		if (scrollHeight - scrollTop <= clientHeight * 1.5 && hasNextPage && !isFetchingNextPage) {
+			fetchNextPage()
+		}
+	}, [hasNextPage, isFetchingNextPage, fetchNextPage])
+
+	if (isLoading) {
+		return (
+			<div className="flex justify-center items-center h-64">
+				<Spin size="large" />
+			</div>
+		)
+	}
+
+	if (error) {
+		return (
+			<div className="text-center text-red-500 py-8">
+				Ошибка загрузки данных
+			</div>
+		)
+	}
 
 	return (
 		<div className="space-y-4">
@@ -198,11 +228,14 @@ export default function ProductsTable({ data, onEdit, onView }: ProductsTablePro
 				/>
 			</div>
 
-			{/* Таблица */}
-			<div className="border rounded-lg overflow-hidden">
+			{/* Таблица с бесконечным скроллом */}
+			<div 
+				className="border rounded-lg overflow-hidden max-h-96 overflow-y-auto"
+				onScroll={handleScroll}
+			>
 				<div className="overflow-x-auto">
 					<table className="w-full">
-						<thead className="bg-gray-50">
+						<thead className="bg-gray-50 sticky top-0 z-10">
 							{table.getHeaderGroups().map(headerGroup => (
 								<tr key={headerGroup.id}>
 									{headerGroup.headers.map(header => (
@@ -256,57 +289,26 @@ export default function ProductsTable({ data, onEdit, onView }: ProductsTablePro
 				</div>
 			</div>
 
-			{/* Пагинация */}
-			<div className="flex items-center justify-between">
-				<div className="text-sm text-gray-700">
-					Показано {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} -{' '}
-					{Math.min(
-						(table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-						table.getFilteredRowModel().rows.length
-					)}{' '}
-					из {table.getFilteredRowModel().rows.length} записей
+			{/* Индикатор загрузки */}
+			{isFetchingNextPage && (
+				<div className="flex justify-center py-4">
+					<Spin />
 				</div>
-				<div className="flex items-center gap-2">
-					<Button
-						onClick={() => table.setPageIndex(0)}
-						disabled={!table.getCanPreviousPage()}
-						size="small"
-					>
-						{'<<'}
+			)}
+
+			{/* Кнопка загрузки следующей страницы */}
+			{hasNextPage && !isFetchingNextPage && (
+				<div className="flex justify-center">
+					<Button onClick={() => fetchNextPage()}>
+						Загрузить еще
 					</Button>
-					<Button
-						onClick={() => table.previousPage()}
-						disabled={!table.getCanPreviousPage()}
-						size="small"
-					>
-						{'<'}
-					</Button>
-					<Button
-						onClick={() => table.nextPage()}
-						disabled={!table.getCanNextPage()}
-						size="small"
-					>
-						{'>'}
-					</Button>
-					<Button
-						onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-						disabled={!table.getCanNextPage()}
-						size="small"
-					>
-						{'>>'}
-					</Button>
-					<Select
-						value={table.getState().pagination.pageSize}
-						onChange={(value) => table.setPageSize(Number(value))}
-						className="w-20"
-						size="small"
-					>
-						<Select.Option value={10}>10</Select.Option>
-						<Select.Option value={20}>20</Select.Option>
-						<Select.Option value={50}>50</Select.Option>
-						<Select.Option value={100}>100</Select.Option>
-					</Select>
 				</div>
+			)}
+
+			{/* Статистика */}
+			<div className="text-sm text-gray-700 text-center">
+				Загружено {allProducts.length} товаров
+				{data?.pages[0]?.total && ` из ${data.pages[0].total}`}
 			</div>
 		</div>
 	)

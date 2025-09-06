@@ -12,33 +12,26 @@ import {
 	type ColumnFiltersState,
 } from '@tanstack/react-table'
 import { Button, Input, Select, Space, Upload, message, Modal } from 'antd'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { deleteProduct, deleteProductPhoto, uploadProductPhoto } from '../features/products/api'
+import { useMockDeleteProduct, useMockUploadProductPhoto, useMockDeleteProductPhoto } from '../hooks/useMockData'
 import type { Product } from '../types/product'
 
 const columnHelper = createColumnHelper<Product>()
 
-interface ProductsTableProps {
+interface MockProductsTableProps {
 	data: Product[]
 	onEdit: (product: Product) => void
 	onView: (product: Product) => void
 }
 
-export default function ProductsTable({ data, onEdit, onView }: ProductsTableProps) {
+export default function MockProductsTable({ data, onEdit, onView }: MockProductsTableProps) {
 	const [sorting, setSorting] = useState<SortingState>([])
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 	const [uploadingId, setUploadingId] = useState<number | null>(null)
-	const queryClient = useQueryClient()
 	const navigate = useNavigate()
 
-	const deleteProductMutation = useMutation({
-		mutationFn: deleteProduct,
-		onSuccess: () => {
-			message.success('Товар удален')
-			queryClient.invalidateQueries({ queryKey: ['catalog'] })
-		},
-		onError: () => message.error('Ошибка удаления товара'),
-	})
+	const deleteProductMutation = useMockDeleteProduct()
+	const uploadPhotoMutation = useMockUploadProductPhoto()
+	const deletePhotoMutation = useMockDeleteProductPhoto()
 
 	const columns = useMemo(
 		() => [
@@ -100,10 +93,12 @@ export default function ProductsTable({ data, onEdit, onView }: ProductsTablePro
 								customRequest={async ({ file, onSuccess, onError }) => {
 									try {
 										setUploadingId(row.original.id)
-										await uploadProductPhoto(row.original.id, file as File)
+										await uploadPhotoMutation.mutateAsync({ 
+											id: row.original.id, 
+											file: file as File 
+										})
 										onSuccess && onSuccess({}, new XMLHttpRequest())
-										message.success('Фото загружено')
-										queryClient.invalidateQueries({ queryKey: ['catalog'] })
+										message.success('Фото загружено (мок)')
 									} catch (e) {
 										onError && onError(new Error('upload failed'))
 										message.error('Ошибка загрузки')
@@ -120,9 +115,8 @@ export default function ProductsTable({ data, onEdit, onView }: ProductsTablePro
 								size="small" 
 								danger
 								onClick={async () => { 
-									await deleteProductPhoto(row.original.id)
-									message.success('Фото удалено')
-									queryClient.invalidateQueries({ queryKey: ['catalog'] })
+									await deletePhotoMutation.mutateAsync(row.original.id)
+									message.success('Фото удалено (мок)')
 								}}
 							>
 								Удалить
@@ -147,6 +141,7 @@ export default function ProductsTable({ data, onEdit, onView }: ProductsTablePro
 							onClick={() => {
 								Modal.confirm({
 									title: 'Удалить товар?',
+									content: 'Это действие нельзя отменить (мок данные)',
 									okText: 'Удалить',
 									okButtonProps: { danger: true },
 									onOk: () => deleteProductMutation.mutate(row.original.id),
@@ -160,7 +155,7 @@ export default function ProductsTable({ data, onEdit, onView }: ProductsTablePro
 				enableResizing: true,
 			}),
 		],
-		[uploadingId, onEdit, onView, deleteProductMutation, queryClient]
+		[uploadingId, onEdit, onView, deleteProductMutation, uploadPhotoMutation, deletePhotoMutation]
 	)
 
 	const table = useReactTable({
