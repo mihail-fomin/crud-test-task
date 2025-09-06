@@ -1,22 +1,18 @@
-import { useState } from 'react'
-import { Button, Modal, Space } from 'antd'
-import { ProductForm } from '../features/admin/ProductForm'
+import { useNavigate } from 'react-router-dom'
+import { Button, Space } from 'antd'
 import InfiniteProductsTable from '../components/InfiniteProductsTable'
 import MockDataPreview from '../components/MockDataPreview'
 import type { Product } from '../types/product'
 
 export default function MainPage() {
-	const [isModalOpen, setIsModalOpen] = useState(false)
-	const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+	const navigate = useNavigate()
 
 	const handleAdd = () => {
-		setEditingProduct(null)
-		setIsModalOpen(true)
+		navigate('/admin')
 	}
 
 	const handleEdit = (product: Product) => {
-		setEditingProduct(product)
-		setIsModalOpen(true)
+		navigate(`/admin?edit=${product.id}`)
 	}
 
 	const handleView = (product: Product) => {
@@ -24,11 +20,6 @@ export default function MainPage() {
 		console.log('View product:', product)
 	}
 
-	const handleFormSubmit = async (values: any) => {
-		// В реальном приложении здесь был бы вызов API
-		console.log('Form submitted:', values)
-		setIsModalOpen(false)
-	}
 
 	return (
 		<div className="space-y-6">
@@ -50,19 +41,6 @@ export default function MainPage() {
 				onEdit={handleEdit}
 				onView={handleView}
 			/>
-
-			<Modal
-				title={editingProduct ? 'Редактировать товар' : 'Добавить товар'}
-				open={isModalOpen}
-				onCancel={() => setIsModalOpen(false)}
-				footer={null}
-				width={600}
-			>
-				<ProductForm 
-					defaultValues={editingProduct || undefined} 
-					onSubmit={handleFormSubmit} 
-				/>
-			</Modal>
 
 		</div>
 	)
