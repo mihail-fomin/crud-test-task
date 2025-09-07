@@ -7,7 +7,6 @@ import { Layout } from 'antd'
 import MainPage from './pages/MainPage'
 import ProductPage from './pages/ProductPage'
 import MockDataPage from './pages/MockDataPage'
-import AdminPage from './pages/AdminPage'
 import './index.css'
 
 const { Header, Content, Footer } = Layout
@@ -48,14 +47,6 @@ const router = createBrowserRouter([
 		element: (
 			<AppLayout>
 				<MockDataPage />
-			</AppLayout>
-		) 
-	},
-	{ 
-		path: '/admin', 
-		element: (
-			<AppLayout>
-				<AdminPage />
 			</AppLayout>
 		) 
 	},

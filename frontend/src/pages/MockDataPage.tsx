@@ -38,9 +38,6 @@ export default function MockDataPage() {
 					<Button type="primary" href="/">
 						Вернуться на главную
 					</Button>
-					<Button href="/admin">
-						Админ панель
-					</Button>
 				</Space>
 			</Card>
 

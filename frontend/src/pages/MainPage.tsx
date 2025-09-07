@@ -1,27 +1,33 @@
 import { useState } from 'react'
-import { Button, Space, Modal } from 'antd'
+import { Button, Space, Modal, Form, Input, InputNumber, message } from 'antd'
 import InfiniteProductsTable from '../components/InfiniteProductsTable'
 import ApiModeToggle from '../components/ApiModeToggle'
-import { ProductForm } from '../features/admin/ProductForm'
 import type { Product } from '../types/product'
 
 export default function MainPage() {
 	const [isModalOpen, setIsModalOpen] = useState(false)
 	const [editingProduct, setEditingProduct] = useState<Product | null>(null)
 	const [viewingProduct, setViewingProduct] = useState<Product | null>(null)
+	const [form] = Form.useForm()
 
 	const handleAdd = () => {
 		setEditingProduct(null)
+		setViewingProduct(null)
+		form.resetFields()
 		setIsModalOpen(true)
 	}
 
 	const handleEdit = (product: Product) => {
 		setEditingProduct(product)
+		setViewingProduct(null)
+		form.setFieldsValue(product)
 		setIsModalOpen(true)
 	}
 
 	const handleView = (product: Product) => {
 		setViewingProduct(product)
+		setEditingProduct(null)
+		form.setFieldsValue(product)
 		setIsModalOpen(true)
 	}
 
@@ -29,6 +35,21 @@ export default function MainPage() {
 		setIsModalOpen(false)
 		setEditingProduct(null)
 		setViewingProduct(null)
+		form.resetFields()
+	}
+
+	const handleFormSubmit = async (values: any) => {
+		try {
+			console.log('Form submitted:', values)
+			if (editingProduct) {
+				message.success('Товар обновлен (мок)')
+			} else {
+				message.success('Товар создан (мок)')
+			}
+			handleModalClose()
+		} catch (error) {
+			message.error('Ошибка сохранения товара')
+		}
 	}
 
 	return (
@@ -56,15 +77,63 @@ export default function MainPage() {
 				footer={null}
 				width={800}
 			>
-				<ProductForm
-					defaultValues={editingProduct || undefined}
-					onSubmit={async (values) => {
-						console.log('Form submitted:', values)
-						handleModalClose()
-					}}
-					submitting={false}
-					readOnly={!!viewingProduct}
-				/>
+				<Form
+					form={form}
+					layout="vertical"
+					onFinish={handleFormSubmit}
+					disabled={!!viewingProduct}
+				>
+					<Form.Item
+						label="Название"
+						name="name"
+						rules={[{ required: true, message: 'Укажите название товара' }]}
+					>
+						<Input />
+					</Form.Item>
+					
+					<Form.Item
+						label="Описание"
+						name="description"
+					>
+						<Input.TextArea rows={3} />
+					</Form.Item>
+					
+					<Form.Item
+						label="Цена"
+						name="price"
+						rules={[{ required: true, message: 'Укажите цену' }]}
+					>
+						<InputNumber min={0} step={0.01} style={{ width: '100%' }} />
+					</Form.Item>
+					
+					<Form.Item
+						label="Цена со скидкой"
+						name="discountedPrice"
+					>
+						<InputNumber min={0} step={0.01} style={{ width: '100%' }} />
+					</Form.Item>
+					
+					<Form.Item
+						label="Артикул"
+						name="sku"
+						rules={[{ required: true, message: 'Укажите артикул' }]}
+					>
+						<Input />
+					</Form.Item>
+					
+					{!viewingProduct && (
+						<Form.Item>
+							<Space>
+								<Button type="primary" htmlType="submit">
+									{editingProduct ? 'Обновить' : 'Создать'}
+								</Button>
+								<Button onClick={handleModalClose}>
+									Отмена
+								</Button>
+							</Space>
+						</Form.Item>
+					)}
+				</Form>
 			</Modal>
 		</div>
 	)

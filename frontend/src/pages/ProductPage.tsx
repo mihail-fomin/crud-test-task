@@ -1,8 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { Button, Card, Space, Typography, Spin, message } from 'antd'
+import { Button, Card, Space, Typography, Spin } from 'antd'
 import { useQuery } from '@tanstack/react-query'
 import { fetchProduct } from '../features/products/api'
-import type { Product } from '../types/product'
 
 const { Title, Text, Paragraph } = Typography
 
@@ -45,11 +44,6 @@ export default function ProductPage() {
 				<Button onClick={() => navigate('/')}>
 					← Назад к каталогу
 				</Button>
-				<Space>
-					<Button type="primary" onClick={() => navigate(`/admin?edit=${product.id}`)}>
-						Редактировать
-					</Button>
-				</Space>
 			</div>
 
 			<Card>
