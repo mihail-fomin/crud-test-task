@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Button, Space, Modal } from 'antd'
 import InfiniteProductsTable from '../components/InfiniteProductsTable'
+import ApiModeToggle from '../components/ApiModeToggle'
 import { ProductForm } from '../features/admin/ProductForm'
 import type { Product } from '../types/product'
 
@@ -32,6 +33,8 @@ export default function MainPage() {
 
 	return (
 		<div className="space-y-6">
+			<ApiModeToggle />
+			
 			<div className="flex justify-between items-center">
 				<h1 className="text-3xl font-bold text-gray-900">Каталог товаров</h1>
 				<Space>
