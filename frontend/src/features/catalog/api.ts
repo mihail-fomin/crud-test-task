@@ -27,7 +27,7 @@ export async function fetchProducts(params: {
 		const sortOrder = params.order || 'ASC'
 		
 		// Генерируем больше мок данных для пагинации
-		let allProducts = generateMockProducts(100)
+		let allProducts = generateMockProducts(100, isMockMode)
 		
 		// Применяем поиск
 		if (search) {

@@ -6,6 +6,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { deleteProduct, deleteProductPhoto, uploadProductPhoto } from '../features/products/api'
 import { useInfiniteCatalogQuery } from '../features/catalog/hooks'
 import { useIsMockMode } from '../hooks/useApiMode'
+import ProductImage from './ProductImage'
 import type { Product } from '../types/product'
 
 const { Title, Text, Paragraph } = Typography
@@ -126,18 +127,12 @@ export default function ProductsCatalog({ onEdit, onView }: ProductsCatalogProps
 						hoverable
 						className="h-full transition-all duration-300 ease-in-out group hover:-translate-y-1 hover:shadow-lg"
 						cover={
-							<div className="relative h-48 bg-gray-100">
-								{product.photoUrl ? (
-									<img
-										alt={product.name}
-										src={product.photoUrl}
-										className="object-cover w-full h-full"
-									/>
-								) : (
-									<div className="flex justify-center items-center h-full">
-										<Text type="secondary">Нет фото</Text>
-									</div>
-								)}
+							<div className="relative h-48">
+								<ProductImage
+									src={product.photoUrl}
+									alt={product.name}
+									className="object-cover w-full h-full"
+								/>
 								
 								{/* Кнопки действий */}
 								<div className="flex absolute top-2 right-2 flex-col gap-1 opacity-0 transition-opacity duration-300 group-hover:opacity-100">

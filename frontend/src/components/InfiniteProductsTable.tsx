@@ -13,6 +13,7 @@ import {
 import { Button, Input, Space, Upload, message, Modal, Spin } from 'antd'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { deleteProduct, deleteProductPhoto, uploadProductPhoto } from '../features/products/api'
+import ProductImage from './ProductImage'
 import { useInfiniteCatalogQuery } from '../features/catalog/hooks'
 import type { Product } from '../types/product'
 
@@ -101,13 +102,11 @@ export default function InfiniteProductsTable({ onEdit, onView }: InfiniteProduc
 					const photoUrl = getValue()
 					return (
 						<div className="flex items-center gap-2">
-							{photoUrl && (
-								<img 
-									src={photoUrl} 
-									className="w-12 h-12 object-cover rounded" 
-									alt={row.original.name}
-								/>
-							)}
+							<ProductImage
+								src={photoUrl}
+								alt={row.original.name}
+								className="w-12 h-12 object-cover rounded"
+							/>
 							<Upload
 								showUploadList={false}
 								customRequest={async ({ file, onSuccess, onError }) => {

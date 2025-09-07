@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchProduct } from '../../products/api'
+import ProductImage from '../../../components/ProductImage'
 
 export default function ProductPage() {
 	const params = useParams()
@@ -13,9 +14,11 @@ export default function ProductPage() {
 	return (
 		<div className="space-y-3">
 			<h2 className="text-xl font-semibold">{data.name}</h2>
-			{data.photoUrl && (
-				<img src={data.photoUrl} alt={data.name} className="max-w-xs rounded" />
-			)}
+			<ProductImage
+				src={data.photoUrl}
+				alt={data.name}
+				className="max-w-xs rounded"
+			/>
 			<div>SKU: {data.sku}</div>
 			<div>
 				Цена: {data.price}

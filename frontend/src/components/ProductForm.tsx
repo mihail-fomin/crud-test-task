@@ -1,6 +1,6 @@
-import { Form, Input, InputNumber, Button, Space, message } from 'antd'
+import { Form, Input, InputNumber, Button, Space, message, Upload } from 'antd'
 import { useState } from 'react'
-import { createProduct, updateProduct, type ProductCreate, type ProductUpdate } from '../features/products/api'
+import { createProduct, updateProduct, uploadProductPhoto, type ProductCreate, type ProductUpdate } from '../features/products/api'
 import type { Product } from '../types/product'
 
 interface ProductFormProps {
@@ -20,10 +20,25 @@ export default function ProductForm({
 }: ProductFormProps) {
 	const [form] = Form.useForm()
 	const [isSubmitting, setIsSubmitting] = useState(false)
+	const [uploadingPhoto, setUploadingPhoto] = useState(false)
+
+	const handlePhotoUpload = async (file: File, productId: number) => {
+		setUploadingPhoto(true)
+		try {
+			await uploadProductPhoto(productId, file, isMockMode)
+			message.success('Фото загружено')
+		} catch (error) {
+			message.error('Ошибка загрузки фото')
+		} finally {
+			setUploadingPhoto(false)
+		}
+	}
 
 	const handleSubmit = async (values: any) => {
 		setIsSubmitting(true)
 		try {
+			let createdProduct: Product | null = null
+			
 			if (mode === 'edit' && product) {
 				// Обновление существующего товара
 				const updateData: ProductUpdate = {
@@ -46,7 +61,7 @@ export default function ProductForm({
 					sku: values.sku,
 				}
 				
-				await createProduct(createData, isMockMode)
+				createdProduct = await createProduct(createData, isMockMode)
 				message.success(isMockMode ? 'Товар создан (мок)' : 'Товар создан')
 			}
 			
@@ -156,6 +171,23 @@ export default function ProductForm({
 			>
 				<Input placeholder="Например: ABC-123" />
 			</Form.Item>
+
+			{mode === 'edit' && product && (
+				<Form.Item label="Фото товара">
+					<Upload
+						showUploadList={false}
+						accept="image/*"
+						beforeUpload={(file) => {
+							handlePhotoUpload(file, product.id)
+							return false // Предотвращаем автоматическую загрузку
+						}}
+					>
+						<Button loading={uploadingPhoto} disabled={uploadingPhoto}>
+							{uploadingPhoto ? 'Загрузка...' : 'Загрузить фото'}
+						</Button>
+					</Upload>
+				</Form.Item>
+			)}
 			
 			{mode !== 'view' && (
 				<Form.Item>

@@ -23,7 +23,7 @@ export async function fetchProduct(id: number, isMockMode: boolean = false): Pro
 		await delay(API_CONFIG.MOCK_DELAY)
 		
 		// Генерируем мок данные
-		const allProducts = generateMockProducts(100)
+		const allProducts = generateMockProducts(100, isMockMode)
 		const product = allProducts.find(p => p.id === id)
 		
 		if (!product) {
@@ -60,7 +60,7 @@ export async function updateProduct(id: number, payload: ProductUpdate, isMockMo
 	if (isMockMode) {
 		await delay(API_CONFIG.MOCK_DELAY)
 		// В мок режиме возвращаем обновленный товар
-		const allProducts = generateMockProducts(100)
+		const allProducts = generateMockProducts(100, isMockMode)
 		const existingProduct = allProducts.find(p => p.id === id)
 		if (!existingProduct) {
 			throw new Error(`Product with id ${id} not found`)
@@ -86,14 +86,14 @@ export async function uploadProductPhoto(id: number, file: File, isMockMode: boo
 	if (isMockMode) {
 		await delay(API_CONFIG.MOCK_DELAY)
 		// В мок режиме симулируем загрузку фото
-		const allProducts = generateMockProducts(100)
+		const allProducts = generateMockProducts(100, isMockMode)
 		const existingProduct = allProducts.find(p => p.id === id)
 		if (!existingProduct) {
 			throw new Error(`Product with id ${id} not found`)
 		}
 		return { 
 			...existingProduct, 
-			photoUrl: `/uploads/mock-${id}-${file.name}`,
+			photoUrl: `https://via.placeholder.com/300x200/007ACC/FFFFFF?text=Uploaded+Photo`,
 			updatedAt: new Date().toISOString() 
 		}
 	}
@@ -110,7 +110,7 @@ export async function deleteProductPhoto(id: number, isMockMode: boolean = false
 	if (isMockMode) {
 		await delay(API_CONFIG.MOCK_DELAY)
 		// В мок режиме симулируем удаление фото
-		const allProducts = generateMockProducts(100)
+		const allProducts = generateMockProducts(100, isMockMode)
 		const existingProduct = allProducts.find(p => p.id === id)
 		if (!existingProduct) {
 			throw new Error(`Product with id ${id} not found`)

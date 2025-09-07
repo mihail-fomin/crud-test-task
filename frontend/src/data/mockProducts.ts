@@ -1,6 +1,7 @@
 import type { Product } from '../types/product';
 
-export const mockProducts: Product[] = [
+// Базовые мок данные с реальными путями к изображениям
+export const baseMockProducts: Product[] = [
   {
     id: 1,
     name: 'iPhone 15 Pro',
@@ -113,9 +114,18 @@ export const mockProducts: Product[] = [
   },
 ];
 
-export const generateMockProducts = (count: number): Product[] => {
+// Мок данные с placeholder изображениями для мок режима
+export const mockProductsWithPlaceholders: Product[] = baseMockProducts.map(product => ({
+  ...product,
+  photoUrl: `https://via.placeholder.com/300x200/007ACC/FFFFFF?text=${encodeURIComponent(product.name)}`
+}));
+
+// Для обратной совместимости
+export const mockProducts = baseMockProducts;
+
+export const generateMockProducts = (count: number, usePlaceholders: boolean = false): Product[] => {
   const products: Product[] = [];
-  const baseProducts = mockProducts;
+  const baseProducts = usePlaceholders ? mockProductsWithPlaceholders : baseMockProducts;
   
   for (let i = 0; i < count; i++) {
     const baseProduct = baseProducts[i % baseProducts.length];
