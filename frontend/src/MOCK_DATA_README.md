@@ -33,8 +33,7 @@
 
 ### Компоненты
 - `MockDataDemo.tsx` - главный компонент демонстрации
-- `MockProductsTable.tsx` - таблица товаров с мок данными
-- `MockInfiniteProductsTable.tsx` - таблица с бесконечным скроллом
+- `InfiniteProductsTable.tsx` - таблица с бесконечным скроллом (используется для мок данных)
 - `MockDataPage.tsx` - страница для демонстрации
 
 ## Использование
