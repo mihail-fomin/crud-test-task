@@ -1,11 +1,15 @@
-import { Input, Select, Space, Table } from 'antd'
-import { useMemo } from 'react'
+import { Input, Select, Space, Table, Button, Modal } from 'antd'
+import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useCatalogQuery } from './hooks'
+import ProductForm from '../../components/ProductForm'
+import { useIsMockMode } from '../../hooks/useApiMode'
 
 export default function CatalogPage() {
 	const [search, setSearch] = useSearchParams()
-	const { data, isLoading } = useCatalogQuery()
+	const { data, isLoading, refetch } = useCatalogQuery()
+	const [isModalOpen, setIsModalOpen] = useState(false)
+	const isMockMode = useIsMockMode()
 
 	const page = Number(search.get('page') || 1)
 	const limit = Number(search.get('limit') || 12)
@@ -36,8 +40,24 @@ export default function CatalogPage() {
 		[],
 	)
 
+	const handleModalClose = () => {
+		setIsModalOpen(false)
+	}
+
+	const handleFormSuccess = () => {
+		handleModalClose()
+		refetch()
+	}
+
 	return (
 		<div className="space-y-6">
+			<div className="flex justify-between items-center">
+				<h1 className="text-3xl font-bold text-gray-900">Каталог товаров</h1>
+				<Button type="primary" size="large" onClick={() => setIsModalOpen(true)}>
+					Добавить товар
+				</Button>
+			</div>
+
 			<div className="flex flex-wrap gap-3">
 				<Input.Search
 					placeholder="Поиск..."
@@ -83,6 +103,21 @@ export default function CatalogPage() {
 				}}
 				loading={isLoading}
 			/>
+
+			<Modal
+				title="Добавить товар"
+				open={isModalOpen}
+				onCancel={handleModalClose}
+				footer={null}
+				width={800}
+			>
+				<ProductForm
+					onSuccess={handleFormSuccess}
+					onCancel={handleModalClose}
+					isMockMode={isMockMode}
+					mode="create"
+				/>
+			</Modal>
 		</div>
 	)
 }

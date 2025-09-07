@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Button, Space, Modal, Form, Input, InputNumber, message } from 'antd'
+import { Button, Space, Modal } from 'antd'
 import ProductsCatalog from '../components/ProductsCatalog'
 import ApiModeToggle from '../components/ApiModeToggle'
+import ProductForm from '../components/ProductForm'
 import { useIsMockMode } from '../hooks/useApiMode'
 import type { Product } from '../types/product'
 
@@ -9,27 +10,23 @@ export default function MainPage() {
 	const [isModalOpen, setIsModalOpen] = useState(false)
 	const [editingProduct, setEditingProduct] = useState<Product | null>(null)
 	const [viewingProduct, setViewingProduct] = useState<Product | null>(null)
-	const [form] = Form.useForm()
 	const isMockMode = useIsMockMode()
 
 	const handleAdd = () => {
 		setEditingProduct(null)
 		setViewingProduct(null)
-		form.resetFields()
 		setIsModalOpen(true)
 	}
 
 	const handleEdit = (product: Product) => {
 		setEditingProduct(product)
 		setViewingProduct(null)
-		form.setFieldsValue(product)
 		setIsModalOpen(true)
 	}
 
 	const handleView = (product: Product) => {
 		setViewingProduct(product)
 		setEditingProduct(null)
-		form.setFieldsValue(product)
 		setIsModalOpen(true)
 	}
 
@@ -37,24 +34,14 @@ export default function MainPage() {
 		setIsModalOpen(false)
 		setEditingProduct(null)
 		setViewingProduct(null)
-		form.resetFields()
 	}
 
-	const handleFormSubmit = async (values: any) => {
-		try {
-			console.log('Form submitted:', values)
-			if (editingProduct) {
-				// Здесь можно добавить реальный API запрос для обновления
-				message.success(isMockMode ? 'Товар обновлен (мок)' : 'Товар обновлен')
-			} else {
-				// Здесь можно добавить реальный API запрос для создания
-				message.success(isMockMode ? 'Товар создан (мок)' : 'Товар создан')
-			}
-			handleModalClose()
-		} catch (error) {
-			message.error('Ошибка сохранения товара')
-		}
+	const handleFormSuccess = () => {
+		handleModalClose()
+		// Обновляем каталог товаров
+		window.location.reload()
 	}
+
 
 	return (
 		<div className="space-y-6">
@@ -81,63 +68,13 @@ export default function MainPage() {
 				footer={null}
 				width={800}
 			>
-				<Form
-					form={form}
-					layout="vertical"
-					onFinish={handleFormSubmit}
-					disabled={!!viewingProduct}
-				>
-					<Form.Item
-						label="Название"
-						name="name"
-						rules={[{ required: true, message: 'Укажите название товара' }]}
-					>
-						<Input />
-					</Form.Item>
-					
-					<Form.Item
-						label="Описание"
-						name="description"
-					>
-						<Input.TextArea rows={3} />
-					</Form.Item>
-					
-					<Form.Item
-						label="Цена"
-						name="price"
-						rules={[{ required: true, message: 'Укажите цену' }]}
-					>
-						<InputNumber min={0} step={0.01} style={{ width: '100%' }} />
-					</Form.Item>
-					
-					<Form.Item
-						label="Цена со скидкой"
-						name="discountedPrice"
-					>
-						<InputNumber min={0} step={0.01} style={{ width: '100%' }} />
-					</Form.Item>
-					
-					<Form.Item
-						label="Артикул"
-						name="sku"
-						rules={[{ required: true, message: 'Укажите артикул' }]}
-					>
-						<Input />
-					</Form.Item>
-					
-					{!viewingProduct && (
-						<Form.Item>
-							<Space>
-								<Button type="primary" htmlType="submit">
-									{editingProduct ? 'Обновить' : 'Создать'}
-								</Button>
-								<Button onClick={handleModalClose}>
-									Отмена
-								</Button>
-							</Space>
-						</Form.Item>
-					)}
-				</Form>
+				<ProductForm
+					product={editingProduct || viewingProduct}
+					onSuccess={handleFormSuccess}
+					onCancel={handleModalClose}
+					isMockMode={isMockMode}
+					mode={viewingProduct ? 'view' : editingProduct ? 'edit' : 'create'}
+				/>
 			</Modal>
 		</div>
 	)

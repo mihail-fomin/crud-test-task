@@ -1,0 +1,182 @@
+import { Form, Input, InputNumber, Button, Space, message } from 'antd'
+import { useState } from 'react'
+import { createProduct, updateProduct, type ProductCreate, type ProductUpdate } from '../features/products/api'
+import type { Product } from '../types/product'
+
+interface ProductFormProps {
+	product?: Product | null
+	onSuccess?: () => void
+	onCancel?: () => void
+	isMockMode?: boolean
+	mode?: 'create' | 'edit' | 'view'
+}
+
+export default function ProductForm({ 
+	product, 
+	onSuccess, 
+	onCancel, 
+	isMockMode = false,
+	mode = 'create' 
+}: ProductFormProps) {
+	const [form] = Form.useForm()
+	const [isSubmitting, setIsSubmitting] = useState(false)
+
+	const handleSubmit = async (values: any) => {
+		setIsSubmitting(true)
+		try {
+			if (mode === 'edit' && product) {
+				// Обновление существующего товара
+				const updateData: ProductUpdate = {
+					name: values.name,
+					description: values.description || null,
+					price: values.price,
+					discountedPrice: values.discountedPrice || null,
+					sku: values.sku,
+				}
+				
+				await updateProduct(product.id, updateData, isMockMode)
+				message.success(isMockMode ? 'Товар обновлен (мок)' : 'Товар обновлен')
+			} else {
+				// Создание нового товара
+				const createData: ProductCreate = {
+					name: values.name,
+					description: values.description || null,
+					price: values.price,
+					discountedPrice: values.discountedPrice || null,
+					sku: values.sku,
+				}
+				
+				await createProduct(createData, isMockMode)
+				message.success(isMockMode ? 'Товар создан (мок)' : 'Товар создан')
+			}
+			
+			onSuccess?.()
+		} catch (error: any) {
+			console.error('Ошибка сохранения товара:', error)
+			
+			// Более детальная обработка ошибок
+			if (error.response?.status === 400) {
+				message.error('Проверьте правильность введенных данных')
+			} else if (error.response?.status === 409) {
+				message.error('Товар с таким артикулом уже существует')
+			} else if (error.response?.status >= 500) {
+				message.error('Ошибка сервера. Попробуйте позже')
+			} else {
+				message.error('Ошибка сохранения товара')
+			}
+		} finally {
+			setIsSubmitting(false)
+		}
+	}
+
+	return (
+		<Form
+			form={form}
+			layout="vertical"
+			onFinish={handleSubmit}
+			disabled={mode === 'view'}
+			initialValues={product ? {
+				name: product.name,
+				description: product.description,
+				price: product.price,
+				discountedPrice: product.discountedPrice,
+				sku: product.sku,
+			} : undefined}
+		>
+			<Form.Item
+				label="Название"
+				name="name"
+				rules={[{ required: true, message: 'Укажите название товара' }]}
+			>
+				<Input placeholder="Введите название товара" />
+			</Form.Item>
+			
+			<Form.Item
+				label="Описание"
+				name="description"
+			>
+				<Input.TextArea 
+					rows={3} 
+					placeholder="Введите описание товара (необязательно)"
+				/>
+			</Form.Item>
+			
+			<Form.Item
+				label="Цена"
+				name="price"
+				rules={[
+					{ required: true, message: 'Укажите цену' },
+					{ type: 'number', min: 0, message: 'Цена должна быть больше 0' }
+				]}
+			>
+				<InputNumber 
+					min={0} 
+					step={0.01} 
+					style={{ width: '100%' }} 
+					placeholder="0.00"
+					formatter={value => `₽ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+					parser={value => value!.replace(/₽\s?|(,*)/g, '')}
+				/>
+			</Form.Item>
+			
+			<Form.Item
+				label="Цена со скидкой"
+				name="discountedPrice"
+				rules={[
+					{ type: 'number', min: 0, message: 'Цена со скидкой должна быть больше 0' },
+					({ getFieldValue }) => ({
+						validator(_, value) {
+							const price = getFieldValue('price')
+							if (!value || !price || value <= price) {
+								return Promise.resolve()
+							}
+							return Promise.reject(new Error('Цена со скидкой должна быть меньше обычной цены'))
+						},
+					}),
+				]}
+			>
+				<InputNumber 
+					min={0} 
+					step={0.01} 
+					style={{ width: '100%' }} 
+					placeholder="0.00"
+					formatter={value => `₽ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+					parser={value => value!.replace(/₽\s?|(,*)/g, '')}
+				/>
+			</Form.Item>
+			
+			<Form.Item
+				label="Артикул"
+				name="sku"
+				rules={[
+					{ required: true, message: 'Укажите артикул' },
+					{ min: 3, message: 'Артикул должен содержать минимум 3 символа' },
+					{ max: 50, message: 'Артикул не должен превышать 50 символов' }
+				]}
+			>
+				<Input placeholder="Например: ABC-123" />
+			</Form.Item>
+			
+			{mode !== 'view' && (
+				<Form.Item>
+					<Space>
+						<Button 
+							type="primary" 
+							htmlType="submit" 
+							loading={isSubmitting}
+							disabled={isSubmitting}
+						>
+							{mode === 'edit' ? 'Обновить' : 'Создать'}
+						</Button>
+						<Button 
+							onClick={onCancel}
+							disabled={isSubmitting}
+						>
+							Отмена
+						</Button>
+					</Space>
+				</Form.Item>
+			)}
+		</Form>
+	)
+}
