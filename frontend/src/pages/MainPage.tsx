@@ -60,6 +60,7 @@ export default function MainPage() {
 						handleModalClose()
 					}}
 					submitting={false}
+					readOnly={!!viewingProduct}
 				/>
 			</Modal>
 		</div>

@@ -24,10 +24,12 @@ export function ProductForm({
 	defaultValues,
 	onSubmit,
   submitting,
+  readOnly = false,
 }: {
 	defaultValues?: Partial<Product>
 	onSubmit: (values: ProductFormValues) => void | Promise<void>
   submitting?: boolean
+  readOnly?: boolean
 }) {
 	const {
 		control,
@@ -46,15 +48,15 @@ export function ProductForm({
 	})
 
 	return (
-		<form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+		<div className="space-y-4">
 			<div>
 				<label className="block text-sm mb-1">Название</label>
-				<Input {...register('name')} />
+				<Input {...register('name')} readOnly={readOnly} />
 				{errors.name && <div className="text-red-500 text-xs mt-1">{errors.name.message}</div>}
 			</div>
 			<div>
 				<label className="block text-sm mb-1">Описание</label>
-				<Input.TextArea rows={3} {...register('description')} />
+				<Input.TextArea rows={3} {...register('description')} readOnly={readOnly} />
 			</div>
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-3">
 				<div>
@@ -63,7 +65,7 @@ export function ProductForm({
 						name="price"
 						control={control}
 						render={({ field }) => (
-							<InputNumber className="w-full" min={0} step={0.01} {...field} />
+							<InputNumber className="w-full" min={0} step={0.01} {...field} readOnly={readOnly} />
 						)}
 					/>
 					{errors.price && <div className="text-red-500 text-xs mt-1">{errors.price.message}</div>}
@@ -74,20 +76,24 @@ export function ProductForm({
 						name="discountedPrice"
 						control={control}
 						render={({ field }) => (
-							<InputNumber className="w-full" min={0} step={0.01} {...field} />
+							<InputNumber className="w-full" min={0} step={0.01} {...field} readOnly={readOnly} />
 						)}
 					/>
 				</div>
 				<div>
 					<label className="block text-sm mb-1">Артикул</label>
-					<Input {...register('sku')} />
+					<Input {...register('sku')} readOnly={readOnly} />
 					{errors.sku && <div className="text-red-500 text-xs mt-1">{errors.sku.message}</div>}
 				</div>
 			</div>
-			<div className="flex justify-end gap-2">
-				<Button htmlType="submit" type="primary" loading={submitting}>Сохранить</Button>
-			</div>
-		</form>
+			{!readOnly && (
+				<div className="flex justify-end gap-2">
+					<Button htmlType="submit" type="primary" loading={submitting} onClick={handleSubmit(onSubmit)}>
+						Сохранить
+					</Button>
+				</div>
+			)}
+		</div>
 	)
 }
 

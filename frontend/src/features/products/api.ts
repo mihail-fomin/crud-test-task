@@ -1,5 +1,9 @@
 import { api } from '../../lib/api'
 import type { Product } from '../../types/product'
+import { generateMockProducts } from '../../data/mockProducts'
+
+// Функция для симуляции задержки API
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 export type ProductCreate = {
 	name: string
@@ -12,8 +16,18 @@ export type ProductCreate = {
 export type ProductUpdate = Partial<ProductCreate> & { photoUrl?: string | null }
 
 export async function fetchProduct(id: number): Promise<Product> {
-	const { data } = await api.get(`/products/${id}`)
-	return data
+	// Симулируем задержку API
+	await delay(300)
+	
+	// Генерируем мок данные
+	const allProducts = generateMockProducts(100)
+	const product = allProducts.find(p => p.id === id)
+	
+	if (!product) {
+		throw new Error(`Product with id ${id} not found`)
+	}
+	
+	return product
 }
 
 export async function createProduct(payload: ProductCreate): Promise<Product> {
