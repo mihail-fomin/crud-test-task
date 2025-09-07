@@ -7,7 +7,6 @@ interface ProductFormProps {
 	product?: Product | null
 	onSuccess?: () => void
 	onCancel?: () => void
-	isMockMode?: boolean
 	mode?: 'create' | 'edit' | 'view'
 }
 
@@ -15,7 +14,6 @@ export default function ProductForm({
 	product, 
 	onSuccess, 
 	onCancel, 
-	isMockMode = false,
 	mode = 'create' 
 }: ProductFormProps) {
 	const [form] = Form.useForm()
@@ -25,7 +23,7 @@ export default function ProductForm({
 	const handlePhotoUpload = async (file: File, productId: number) => {
 		setUploadingPhoto(true)
 		try {
-			await uploadProductPhoto(productId, file, isMockMode)
+			await uploadProductPhoto(productId, file)
 			message.success('Фото загружено')
 		} catch (error) {
 			message.error('Ошибка загрузки фото')
@@ -37,8 +35,6 @@ export default function ProductForm({
 	const handleSubmit = async (values: any) => {
 		setIsSubmitting(true)
 		try {
-			let createdProduct: Product | null = null
-			
 			if (mode === 'edit' && product) {
 				// Обновление существующего товара
 				const updateData: ProductUpdate = {
@@ -49,8 +45,8 @@ export default function ProductForm({
 					sku: values.sku,
 				}
 				
-				await updateProduct(product.id, updateData, isMockMode)
-				message.success(isMockMode ? 'Товар обновлен (мок)' : 'Товар обновлен')
+				await updateProduct(product.id, updateData)
+				message.success('Товар обновлен')
 			} else {
 				// Создание нового товара
 				const createData: ProductCreate = {
@@ -61,8 +57,8 @@ export default function ProductForm({
 					sku: values.sku,
 				}
 				
-				createdProduct = await createProduct(createData, isMockMode)
-				message.success(isMockMode ? 'Товар создан (мок)' : 'Товар создан')
+				await createProduct(createData)
+				message.success('Товар создан')
 			}
 			
 			onSuccess?.()
@@ -130,7 +126,7 @@ export default function ProductForm({
 					style={{ width: '100%' }} 
 					placeholder="0.00"
 					formatter={value => `₽ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-					parser={value => value!.replace(/₽\s?|(,*)/g, '')}
+					parser={value => value!.replace(/₽\s?|(,*)/g, '') as any}
 				/>
 			</Form.Item>
 			
@@ -156,7 +152,7 @@ export default function ProductForm({
 					style={{ width: '100%' }} 
 					placeholder="0.00"
 					formatter={value => `₽ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-					parser={value => value!.replace(/₽\s?|(,*)/g, '')}
+					parser={value => value!.replace(/₽\s?|(,*)/g, '') as any}
 				/>
 			</Form.Item>
 			

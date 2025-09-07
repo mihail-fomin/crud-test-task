@@ -4,8 +4,7 @@ import { Card, Button, Typography, Input, Spin, message, Modal, Upload } from 'a
 import { SearchOutlined, EditOutlined, EyeOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { deleteProduct, deleteProductPhoto, uploadProductPhoto } from '../features/products/api'
-import { useInfiniteCatalogQuery } from '../features/catalog/hooks'
-import { useIsMockMode } from '../hooks/useApiMode'
+import { useCatalogQuery } from '../features/catalog/hooks'
 import ProductImage from './ProductImage'
 import type { Product } from '../types/product'
 
@@ -22,22 +21,18 @@ export default function ProductsCatalog({ onEdit, onView }: ProductsCatalogProps
 	const [uploadingId, setUploadingId] = useState<number | null>(null)
 	const queryClient = useQueryClient()
 	const navigate = useNavigate()
-	const isMockMode = useIsMockMode()
 
 	const {
 		data,
-		fetchNextPage,
-		hasNextPage,
-		isFetchingNextPage,
 		isLoading,
 		error,
-	} = useInfiniteCatalogQuery()
+	} = useCatalogQuery()
 
 	const deleteProductMutation = useMutation({
-		mutationFn: (id: number) => deleteProduct(id, isMockMode),
+		mutationFn: (id: number) => deleteProduct(id),
 		onSuccess: () => {
 			message.success('Товар удален')
-			queryClient.invalidateQueries({ queryKey: ['catalog-infinite'] })
+			queryClient.invalidateQueries({ queryKey: ['catalog'] })
 		},
 		onError: () => message.error('Ошибка удаления товара'),
 	})
@@ -60,28 +55,28 @@ export default function ProductsCatalog({ onEdit, onView }: ProductsCatalogProps
 	const handlePhotoUpload = useCallback(async (productId: number, file: File) => {
 		try {
 			setUploadingId(productId)
-			await uploadProductPhoto(productId, file, isMockMode)
+			await uploadProductPhoto(productId, file)
 			message.success('Фото загружено')
-			queryClient.invalidateQueries({ queryKey: ['catalog-infinite'] })
+			queryClient.invalidateQueries({ queryKey: ['catalog'] })
 		} catch (error) {
 			message.error('Ошибка загрузки фото')
 		} finally {
 			setUploadingId(null)
 		}
-	}, [queryClient, isMockMode])
+	}, [queryClient])
 
 	const handleDeletePhoto = useCallback(async (productId: number) => {
 		try {
-			await deleteProductPhoto(productId, isMockMode)
+			await deleteProductPhoto(productId)
 			message.success('Фото удалено')
-			queryClient.invalidateQueries({ queryKey: ['catalog-infinite'] })
+			queryClient.invalidateQueries({ queryKey: ['catalog'] })
 		} catch (error) {
 			message.error('Ошибка удаления фото')
 		}
-	}, [queryClient, isMockMode])
+	}, [queryClient])
 
 	// Фильтрация товаров по поисковому запросу
-	const filteredProducts = data?.pages.flatMap(page => page.data)?.filter(product =>
+	const filteredProducts = data?.data?.filter(product =>
 		product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
 		product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
 		product.description?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -256,18 +251,6 @@ export default function ProductsCatalog({ onEdit, onView }: ProductsCatalogProps
 				))}
 			</div>
 
-			{/* Кнопка загрузки еще */}
-			{hasNextPage && (
-				<div className="py-4 text-center">
-					<Button
-						size="large"
-						loading={isFetchingNextPage}
-						onClick={() => fetchNextPage()}
-					>
-						{isFetchingNextPage ? 'Загрузка...' : 'Загрузить еще'}
-					</Button>
-				</div>
-			)}
 
 			{/* Сообщение, если товары не найдены */}
 			{filteredProducts.length === 0 && searchTerm && (

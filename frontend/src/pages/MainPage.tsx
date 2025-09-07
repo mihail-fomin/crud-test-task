@@ -1,16 +1,13 @@
 import { useState } from 'react'
 import { Button, Space, Modal } from 'antd'
 import ProductsCatalog from '../components/ProductsCatalog'
-import ApiModeToggle from '../components/ApiModeToggle'
 import ProductForm from '../components/ProductForm'
-import { useIsMockMode } from '../hooks/useApiMode'
 import type { Product } from '../types/product'
 
 export default function MainPage() {
 	const [isModalOpen, setIsModalOpen] = useState(false)
 	const [editingProduct, setEditingProduct] = useState<Product | null>(null)
 	const [viewingProduct, setViewingProduct] = useState<Product | null>(null)
-	const isMockMode = useIsMockMode()
 
 	const handleAdd = () => {
 		setEditingProduct(null)
@@ -45,8 +42,6 @@ export default function MainPage() {
 
 	return (
 		<div className="space-y-6">
-			<ApiModeToggle />
-			
 			<div className="flex justify-between items-center">
 				<h1 className="text-3xl font-bold text-gray-900">Каталог товаров</h1>
 				<Space>
@@ -72,7 +67,6 @@ export default function MainPage() {
 					product={editingProduct || viewingProduct}
 					onSuccess={handleFormSuccess}
 					onCancel={handleModalClose}
-					isMockMode={isMockMode}
 					mode={viewingProduct ? 'view' : editingProduct ? 'edit' : 'create'}
 				/>
 			</Modal>

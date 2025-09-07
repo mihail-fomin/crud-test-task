@@ -22,9 +22,7 @@
 
 ### 3. Обновленные компоненты таблиц
 - `ProductsTable.tsx` - обычная таблица товаров
-- `InfiniteProductsTable.tsx` - таблица с бесконечным скроллом
 - `MockProductsTable.tsx` - таблица с мок данными
-- `MockInfiniteProductsTable.tsx` - мок таблица с бесконечным скроллом
 
 ## Как работает
 

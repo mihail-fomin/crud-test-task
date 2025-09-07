@@ -1,15 +1,15 @@
-import { Input, Select, Space, Table, Button, Modal } from 'antd'
+import { Input, Select, Space, Button, Modal, Table } from 'antd'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useCatalogQuery } from './hooks'
 import ProductForm from '../../components/ProductForm'
-import { useIsMockMode } from '../../hooks/useApiMode'
 
 export default function CatalogPage() {
 	const [search, setSearch] = useSearchParams()
-	const { data, isLoading, refetch } = useCatalogQuery()
 	const [isModalOpen, setIsModalOpen] = useState(false)
-	const isMockMode = useIsMockMode()
+
+	// Обычная пагинация
+	const { data, isLoading, refetch } = useCatalogQuery()
 
 	const page = Number(search.get('page') || 1)
 	const limit = Number(search.get('limit') || 12)
@@ -49,6 +49,7 @@ export default function CatalogPage() {
 		refetch()
 	}
 
+
 	return (
 		<div className="space-y-6">
 			<div className="flex justify-between items-center">
@@ -86,6 +87,7 @@ export default function CatalogPage() {
 					]}
 				/>
 			</div>
+
 			<Table
 				rowKey="id"
 				columns={columns as any}
@@ -94,7 +96,7 @@ export default function CatalogPage() {
 					current: page,
 					total: data?.total || 0,
 					pageSize: limit,
-					onChange: (p, ps) => {
+					onChange: (p: number, ps: number) => {
 						const next = new URLSearchParams(search)
 						next.set('page', String(p))
 						next.set('limit', String(ps))
@@ -114,7 +116,6 @@ export default function CatalogPage() {
 				<ProductForm
 					onSuccess={handleFormSuccess}
 					onCancel={handleModalClose}
-					isMockMode={isMockMode}
 					mode="create"
 				/>
 			</Modal>

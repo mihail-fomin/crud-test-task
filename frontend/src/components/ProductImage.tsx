@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { PictureOutlined } from '@ant-design/icons'
 import { getProductImageUrl } from '../utils/imageUtils'
-import { useIsMockMode } from '../hooks/useApiMode'
 
 interface ProductImageProps {
 	src?: string | null
@@ -18,10 +17,9 @@ export default function ProductImage({
 }: ProductImageProps) {
 	const [imageError, setImageError] = useState(false)
 	const [imageLoading, setImageLoading] = useState(true)
-	const isMockMode = useIsMockMode()
 
 	// Получаем правильный URL для изображения
-	const imageUrl = getProductImageUrl(src, isMockMode)
+	const imageUrl = getProductImageUrl(src)
 
 	// Если нет URL или произошла ошибка загрузки
 	if (!imageUrl || imageError) {
