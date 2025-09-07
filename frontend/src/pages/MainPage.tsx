@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Button, Space, Modal, Form, Input, InputNumber, message } from 'antd'
-import InfiniteProductsTable from '../components/InfiniteProductsTable'
+import ProductsCatalog from '../components/ProductsCatalog'
 import ApiModeToggle from '../components/ApiModeToggle'
 import type { Product } from '../types/product'
 
@@ -65,7 +65,7 @@ export default function MainPage() {
 				</Space>
 			</div>
 
-			<InfiniteProductsTable 
+			<ProductsCatalog 
 				onEdit={handleEdit}
 				onView={handleView}
 			/>

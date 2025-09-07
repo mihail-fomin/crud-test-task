@@ -9,19 +9,15 @@ import ProductPage from './pages/ProductPage'
 import MockDataPage from './pages/MockDataPage'
 import './index.css'
 
-const { Header, Content, Footer } = Layout
+const { Content } = Layout
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => (
 	<Layout className="min-h-screen">
-		<Header className="flex items-center bg-gradient-to-r from-blue-600 to-indigo-600">
-			<div className="text-white font-bold text-2xl">Products Store</div>
-		</Header>
 		<Content className="py-8">
-			<div className="max-w-7xl mx-auto px-6">
+			<div className="px-6 mx-auto max-w-7xl">
 				{children}
 			</div>
 		</Content>
-		<Footer className="text-center">Test Task</Footer>
 	</Layout>
 )
 

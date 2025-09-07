@@ -26,7 +26,7 @@ export default function ProductPage() {
 
 	if (error || !product) {
 		return (
-			<div className="text-center py-8">
+			<div className="py-8 text-center">
 				<Title level={2} className="text-red-500">Товар не найден</Title>
 				<Text type="secondary" className="block mb-4">
 					Товар с ID {productId} не существует
@@ -39,7 +39,7 @@ export default function ProductPage() {
 	}
 
 	return (
-		<div className="max-w-4xl mx-auto space-y-6">
+		<div className="mx-auto space-y-6 max-w-4xl">
 			<div className="flex justify-between items-center">
 				<Button onClick={() => navigate('/')}>
 					← Назад к каталогу
@@ -47,17 +47,17 @@ export default function ProductPage() {
 			</div>
 
 			<Card>
-				<div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+				<div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
 					{/* Фото товара */}
 					<div>
 						{product.photoUrl ? (
 							<img
 								src={product.photoUrl}
 								alt={product.name}
-								className="w-full h-96 object-cover rounded-lg"
+								className="object-cover w-full h-96 rounded-lg"
 							/>
 						) : (
-							<div className="w-full h-96 bg-gray-200 rounded-lg flex items-center justify-center">
+							<div className="flex justify-center items-center w-full h-96 bg-gray-200 rounded-lg">
 								<Text type="secondary">Нет фотографии</Text>
 							</div>
 						)}
@@ -80,7 +80,7 @@ export default function ProductPage() {
 						<div>
 							<Title level={4}>Цена</Title>
 							<div className="space-y-2">
-								<div className="flex items-center gap-4">
+								<div className="flex gap-4 items-center">
 									<Text className="text-3xl font-bold">
 										{product.price.toLocaleString()} ₽
 									</Text>
@@ -94,7 +94,7 @@ export default function ProductPage() {
 									)}
 								</div>
 								{product.discountedPrice && (
-									<Text className="text-green-600 font-semibold">
+									<Text className="font-semibold text-green-600">
 										Экономия: {((product.price - product.discountedPrice) / product.price * 100).toFixed(0)}%
 									</Text>
 								)}
