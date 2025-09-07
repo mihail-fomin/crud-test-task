@@ -2,17 +2,19 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { Button, Card, Space, Typography, Spin } from 'antd'
 import { useQuery } from '@tanstack/react-query'
 import { fetchProduct } from '../features/products/api'
+import { useIsMockMode } from '../hooks/useApiMode'
 
 const { Title, Text, Paragraph } = Typography
 
 export default function ProductPage() {
 	const { id } = useParams<{ id: string }>()
 	const navigate = useNavigate()
+	const isMockMode = useIsMockMode()
 	const productId = id ? parseInt(id, 10) : 0
 
 	const { data: product, isLoading, error } = useQuery({
-		queryKey: ['product', productId],
-		queryFn: () => fetchProduct(productId),
+		queryKey: ['product', productId, isMockMode],
+		queryFn: () => fetchProduct(productId, isMockMode),
 		enabled: !!productId,
 	})
 

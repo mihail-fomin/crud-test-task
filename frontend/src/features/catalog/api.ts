@@ -1,7 +1,7 @@
 import { api } from '../../lib/api'
 import type { PaginatedResponse, Product } from '../../types/product'
 import { generateMockProducts } from '../../data/mockProducts'
-import { isMockMode, API_CONFIG } from '../../config/api'
+import { API_CONFIG } from '../../config/api'
 
 // Функция для симуляции задержки API
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
@@ -14,9 +14,9 @@ export async function fetchProducts(params: {
 	q?: string
 	minPrice?: number
 	maxPrice?: number
-}): Promise<PaginatedResponse<Product>> {
+}, isMockMode: boolean = false): Promise<PaginatedResponse<Product>> {
 	// Если используется мок режим
-	if (isMockMode()) {
+	if (isMockMode) {
 		// Симулируем задержку API
 		await delay(API_CONFIG.MOCK_DELAY)
 		
@@ -89,9 +89,9 @@ export async function fetchProductsPage(params: {
 	q?: string
 	minPrice?: number
 	maxPrice?: number
-}): Promise<PaginatedResponse<Product>> {
+}, isMockMode: boolean = false): Promise<PaginatedResponse<Product>> {
 	const page = params.pageParam || 1
-	return fetchProducts({ ...params, page })
+	return fetchProducts({ ...params, page }, isMockMode)
 }
 
 

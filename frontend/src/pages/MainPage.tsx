@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Button, Space, Modal, Form, Input, InputNumber, message } from 'antd'
 import ProductsCatalog from '../components/ProductsCatalog'
 import ApiModeToggle from '../components/ApiModeToggle'
+import { useIsMockMode } from '../hooks/useApiMode'
 import type { Product } from '../types/product'
 
 export default function MainPage() {
@@ -9,6 +10,7 @@ export default function MainPage() {
 	const [editingProduct, setEditingProduct] = useState<Product | null>(null)
 	const [viewingProduct, setViewingProduct] = useState<Product | null>(null)
 	const [form] = Form.useForm()
+	const isMockMode = useIsMockMode()
 
 	const handleAdd = () => {
 		setEditingProduct(null)
@@ -42,9 +44,11 @@ export default function MainPage() {
 		try {
 			console.log('Form submitted:', values)
 			if (editingProduct) {
-				message.success('Товар обновлен (мок)')
+				// Здесь можно добавить реальный API запрос для обновления
+				message.success(isMockMode ? 'Товар обновлен (мок)' : 'Товар обновлен')
 			} else {
-				message.success('Товар создан (мок)')
+				// Здесь можно добавить реальный API запрос для создания
+				message.success(isMockMode ? 'Товар создан (мок)' : 'Товар создан')
 			}
 			handleModalClose()
 		} catch (error) {

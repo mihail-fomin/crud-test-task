@@ -1,7 +1,7 @@
 import { api } from '../../lib/api'
 import type { Product } from '../../types/product'
 import { generateMockProducts } from '../../data/mockProducts'
-import { isMockMode, API_CONFIG } from '../../config/api'
+import { API_CONFIG } from '../../config/api'
 
 // Функция для симуляции задержки API
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
@@ -16,9 +16,9 @@ export type ProductCreate = {
 
 export type ProductUpdate = Partial<ProductCreate> & { photoUrl?: string | null }
 
-export async function fetchProduct(id: number): Promise<Product> {
+export async function fetchProduct(id: number, isMockMode: boolean = false): Promise<Product> {
 	// Если используется мок режим
-	if (isMockMode()) {
+	if (isMockMode) {
 		// Симулируем задержку API
 		await delay(API_CONFIG.MOCK_DELAY)
 		
@@ -38,8 +38,8 @@ export async function fetchProduct(id: number): Promise<Product> {
 	return data
 }
 
-export async function createProduct(payload: ProductCreate): Promise<Product> {
-	if (isMockMode()) {
+export async function createProduct(payload: ProductCreate, isMockMode: boolean = false): Promise<Product> {
+	if (isMockMode) {
 		await delay(API_CONFIG.MOCK_DELAY)
 		// В мок режиме просто возвращаем новый товар с ID
 		const newProduct: Product = {
@@ -56,8 +56,8 @@ export async function createProduct(payload: ProductCreate): Promise<Product> {
 	return data
 }
 
-export async function updateProduct(id: number, payload: ProductUpdate): Promise<Product> {
-	if (isMockMode()) {
+export async function updateProduct(id: number, payload: ProductUpdate, isMockMode: boolean = false): Promise<Product> {
+	if (isMockMode) {
 		await delay(API_CONFIG.MOCK_DELAY)
 		// В мок режиме возвращаем обновленный товар
 		const allProducts = generateMockProducts(100)
@@ -72,8 +72,8 @@ export async function updateProduct(id: number, payload: ProductUpdate): Promise
 	return data
 }
 
-export async function deleteProduct(id: number): Promise<void> {
-	if (isMockMode()) {
+export async function deleteProduct(id: number, isMockMode: boolean = false): Promise<void> {
+	if (isMockMode) {
 		await delay(API_CONFIG.MOCK_DELAY)
 		// В мок режиме просто симулируем удаление
 		return
@@ -82,8 +82,8 @@ export async function deleteProduct(id: number): Promise<void> {
 	await api.delete(`/products/${id}`)
 }
 
-export async function uploadProductPhoto(id: number, file: File): Promise<Product> {
-	if (isMockMode()) {
+export async function uploadProductPhoto(id: number, file: File, isMockMode: boolean = false): Promise<Product> {
+	if (isMockMode) {
 		await delay(API_CONFIG.MOCK_DELAY)
 		// В мок режиме симулируем загрузку фото
 		const allProducts = generateMockProducts(100)
@@ -106,8 +106,8 @@ export async function uploadProductPhoto(id: number, file: File): Promise<Produc
 	return data
 }
 
-export async function deleteProductPhoto(id: number): Promise<Product> {
-	if (isMockMode()) {
+export async function deleteProductPhoto(id: number, isMockMode: boolean = false): Promise<Product> {
+	if (isMockMode) {
 		await delay(API_CONFIG.MOCK_DELAY)
 		// В мок режиме симулируем удаление фото
 		const allProducts = generateMockProducts(100)

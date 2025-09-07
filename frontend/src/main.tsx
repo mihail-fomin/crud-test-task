@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ConfigProvider, App as AntdApp } from 'antd'
 import { Layout } from 'antd'
+import { ApiProvider } from './contexts/ApiContext'
 import MainPage from './pages/MainPage'
 import ProductPage from './pages/ProductPage'
 import MockDataPage from './pages/MockDataPage'
@@ -38,26 +39,20 @@ const router = createBrowserRouter([
 			</AppLayout>
 		) 
 	},
-	{ 
-		path: '/mock-data', 
-		element: (
-			<AppLayout>
-				<MockDataPage />
-			</AppLayout>
-		) 
-	},
 ])
 
 const queryClient = new QueryClient()
 
 createRoot(document.getElementById('root')!).render(
 	<StrictMode>
-		<QueryClientProvider client={queryClient}>
-			<ConfigProvider>
-				<AntdApp>
-					<RouterProvider router={router} />
-				</AntdApp>
-			</ConfigProvider>
-		</QueryClientProvider>
+		<ApiProvider>
+			<QueryClientProvider client={queryClient}>
+				<ConfigProvider>
+					<AntdApp>
+						<RouterProvider router={router} />
+					</AntdApp>
+				</ConfigProvider>
+			</QueryClientProvider>
+		</ApiProvider>
 	</StrictMode>,
 )

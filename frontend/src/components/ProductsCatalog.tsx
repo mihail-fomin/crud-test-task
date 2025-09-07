@@ -5,6 +5,7 @@ import { SearchOutlined, EditOutlined, EyeOutlined, DeleteOutlined } from '@ant-
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { deleteProduct, deleteProductPhoto, uploadProductPhoto } from '../features/products/api'
 import { useInfiniteCatalogQuery } from '../features/catalog/hooks'
+import { useIsMockMode } from '../hooks/useApiMode'
 import type { Product } from '../types/product'
 
 const { Title, Text, Paragraph } = Typography
@@ -20,6 +21,7 @@ export default function ProductsCatalog({ onEdit, onView }: ProductsCatalogProps
 	const [uploadingId, setUploadingId] = useState<number | null>(null)
 	const queryClient = useQueryClient()
 	const navigate = useNavigate()
+	const isMockMode = useIsMockMode()
 
 	const {
 		data,
@@ -31,7 +33,7 @@ export default function ProductsCatalog({ onEdit, onView }: ProductsCatalogProps
 	} = useInfiniteCatalogQuery()
 
 	const deleteProductMutation = useMutation({
-		mutationFn: deleteProduct,
+		mutationFn: (id: number) => deleteProduct(id, isMockMode),
 		onSuccess: () => {
 			message.success('Товар удален')
 			queryClient.invalidateQueries({ queryKey: ['catalog-infinite'] })
@@ -57,7 +59,7 @@ export default function ProductsCatalog({ onEdit, onView }: ProductsCatalogProps
 	const handlePhotoUpload = useCallback(async (productId: number, file: File) => {
 		try {
 			setUploadingId(productId)
-			await uploadProductPhoto(productId, file)
+			await uploadProductPhoto(productId, file, isMockMode)
 			message.success('Фото загружено')
 			queryClient.invalidateQueries({ queryKey: ['catalog-infinite'] })
 		} catch (error) {
@@ -65,17 +67,17 @@ export default function ProductsCatalog({ onEdit, onView }: ProductsCatalogProps
 		} finally {
 			setUploadingId(null)
 		}
-	}, [queryClient])
+	}, [queryClient, isMockMode])
 
 	const handleDeletePhoto = useCallback(async (productId: number) => {
 		try {
-			await deleteProductPhoto(productId)
+			await deleteProductPhoto(productId, isMockMode)
 			message.success('Фото удалено')
 			queryClient.invalidateQueries({ queryKey: ['catalog-infinite'] })
 		} catch (error) {
 			message.error('Ошибка удаления фото')
 		}
-	}, [queryClient])
+	}, [queryClient, isMockMode])
 
 	// Фильтрация товаров по поисковому запросу
 	const filteredProducts = data?.pages.flatMap(page => page.data)?.filter(product =>
@@ -122,7 +124,7 @@ export default function ProductsCatalog({ onEdit, onView }: ProductsCatalogProps
 					<Card
 						key={product.id}
 						hoverable
-						className="h-full group transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg"
+						className="h-full transition-all duration-300 ease-in-out group hover:-translate-y-1 hover:shadow-lg"
 						cover={
 							<div className="relative h-48 bg-gray-100">
 								{product.photoUrl ? (
@@ -138,7 +140,7 @@ export default function ProductsCatalog({ onEdit, onView }: ProductsCatalogProps
 								)}
 								
 								{/* Кнопки действий */}
-								<div className="flex absolute top-2 right-2 flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+								<div className="flex absolute top-2 right-2 flex-col gap-1 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
 									<Button
 										size="small"
 										icon={<EyeOutlined />}
@@ -199,7 +201,7 @@ export default function ProductsCatalog({ onEdit, onView }: ProductsCatalogProps
 						<Card.Meta
 							title={
 								<div className="space-y-2">
-									<Title level={5} className="mb-1 overflow-hidden" style={{
+									<Title level={5} className="overflow-hidden mb-1" style={{
 										display: '-webkit-box',
 										WebkitLineClamp: 2,
 										WebkitBoxOrient: 'vertical'
