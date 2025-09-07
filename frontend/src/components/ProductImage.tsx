@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { PictureOutlined } from '@ant-design/icons'
+import { Image } from 'antd'
 import { getProductImageUrl } from '../utils/imageUtils'
 
 interface ProductImageProps {
@@ -18,21 +18,20 @@ export default function ProductImage({
 	const [imageError, setImageError] = useState(false)
 	const [imageLoading, setImageLoading] = useState(true)
 
-	// Получаем правильный URL для изображения
 	const imageUrl = getProductImageUrl(src)
 
 	// Если нет URL или произошла ошибка загрузки
 	if (!imageUrl || imageError) {
 		return (
 			<div className={`bg-gray-100 ${className} ${fallbackClassName}`}>
-				<PictureOutlined className="text-4xl" />
+				<Image className="text-4xl" src="/public/images/product-default-image.png" />
 			</div>
 		)
 	}
 
 	return (
 		<div className="relative">
-			<img
+			<Image
 				src={imageUrl}
 				alt={alt}
 				className={className}

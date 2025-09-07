@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/uploads': {
-        target: 'http://localhost:3000',
+        target: 'https://user20431889-u4ihnuw2.tunnel.vk-apps.com',
         changeOrigin: true,
         secure: false,
       },
