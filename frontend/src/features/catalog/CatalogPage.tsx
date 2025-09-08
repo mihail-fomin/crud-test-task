@@ -15,13 +15,11 @@ export default function CatalogPage() {
 		isLoading,
 		isError,
 		error,
-		fetchNextPage,
 		hasNextPage,
 		isFetchingNextPage,
 		refetch
 	} = useInfiniteCatalogQuery()
 
-	const limit = Number(search.get('limit') || 12)
 	const sort = search.get('sort') || 'createdAt'
 	const order = (search.get('order') || 'DESC') as 'ASC' | 'DESC'
 
@@ -31,17 +29,10 @@ export default function CatalogPage() {
 	}, [data])
 
 	// Настройка для отслеживания скролла
-	const { ref: loadMoreRef, inView } = useInView({
+	const { ref: loadMoreRef } = useInView({
 		threshold: 0.1,
 		rootMargin: '100px'
 	})
-
-	// Автоматическая загрузка следующей страницы при достижении конца списка
-	useEffect(() => {
-		if (inView && hasNextPage && !isFetchingNextPage) {
-			fetchNextPage()
-		}
-	}, [inView, hasNextPage, isFetchingNextPage, fetchNextPage])
 
 	const columns = useMemo(
 		() => [
@@ -152,17 +143,7 @@ export default function CatalogPage() {
 				scroll={{ y: 600 }}
 			/>
 
-			{/* Индикатор загрузки следующей страницы */}
-			<div ref={loadMoreRef} className="flex justify-center py-4">
-				{isFetchingNextPage && (
-					<Spin size="large" tip="Загрузка товаров..." />
-				)}
-				{!hasNextPage && allProducts.length > 0 && (
-					<div className="text-gray-500 text-center">
-						Все товары загружены ({allProducts.length} шт.)
-					</div>
-				)}
-			</div>
+
 
 			<Modal
 				title="Добавить товар"

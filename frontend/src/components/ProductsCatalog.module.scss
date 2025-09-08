@@ -303,6 +303,27 @@
   color: #6b7280;
 }
 
+// Стили для бесконечной прокрутки
+.loadingMore {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem 1rem;
+  margin: 1rem 0;
+}
+
+.scrollTrigger {
+  height: 1px;
+  width: 100%;
+}
+
+.endMessage {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
 // Адаптивность
 @media (max-width: 768px) {
   .grid {

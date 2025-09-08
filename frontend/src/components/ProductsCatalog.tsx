@@ -1,10 +1,10 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Card, Button, Typography, Input, Spin, message, Modal, Upload } from 'antd'
 import { SearchOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { deleteProduct, deleteProductPhoto, uploadProductPhoto } from '../features/products/api'
-import { useCatalogQuery } from '../features/catalog/hooks'
+import { useInfiniteCatalogQuery } from '../features/catalog/hooks'
 import ProductImage from './ProductImage'
 import type { Product } from '../types/product'
 import styles from './ProductsCatalog.module.scss'
@@ -21,18 +21,22 @@ export default function ProductsCatalog({ onEdit }: ProductsCatalogProps) {
 	const [uploadingId, setUploadingId] = useState<number | null>(null)
 	const queryClient = useQueryClient()
 	const navigate = useNavigate()
+	const loadMoreRef = useRef<HTMLDivElement>(null)
 
 	const {
 		data,
 		isLoading,
 		error,
-	} = useCatalogQuery()
+		fetchNextPage,
+		hasNextPage,
+		isFetchingNextPage,
+	} = useInfiniteCatalogQuery()
 
 	const deleteProductMutation = useMutation({
 		mutationFn: (id: number) => deleteProduct(id),
 		onSuccess: () => {
 			message.success('Товар удален')
-			queryClient.invalidateQueries({ queryKey: ['catalog'] })
+			queryClient.invalidateQueries({ queryKey: ['catalog-infinite'] })
 		},
 		onError: () => message.error('Ошибка удаления товара'),
 	})
@@ -57,7 +61,7 @@ export default function ProductsCatalog({ onEdit }: ProductsCatalogProps) {
 			setUploadingId(productId)
 			await uploadProductPhoto(productId, file)
 			message.success('Фото загружено')
-			queryClient.invalidateQueries({ queryKey: ['catalog'] })
+			queryClient.invalidateQueries({ queryKey: ['catalog-infinite'] })
 		} catch (error) {
 			message.error('Ошибка загрузки фото')
 		} finally {
@@ -69,18 +73,36 @@ export default function ProductsCatalog({ onEdit }: ProductsCatalogProps) {
 		try {
 			await deleteProductPhoto(productId)
 			message.success('Фото удалено')
-			queryClient.invalidateQueries({ queryKey: ['catalog'] })
+			queryClient.invalidateQueries({ queryKey: ['catalog-infinite'] })
 		} catch (error) {
 			message.error('Ошибка удаления фото')
 		}
 	}, [queryClient])
 
+	// Обработчик скролла для бесконечной прокрутки
+	useEffect(() => {
+		const handleScroll = () => {
+			if (!loadMoreRef.current || !hasNextPage || isFetchingNextPage) return
+
+			const rect = loadMoreRef.current.getBoundingClientRect()
+			if (rect.top <= window.innerHeight + 300) {
+				fetchNextPage()
+			}
+		}
+
+		window.addEventListener('scroll', handleScroll)
+		return () => window.removeEventListener('scroll', handleScroll)
+	}, [fetchNextPage, hasNextPage, isFetchingNextPage])
+
+	// Объединяем все товары из всех страниц
+	const allProducts = data?.pages?.flatMap(page => page.data) || []
+
 	// Фильтрация товаров по поисковому запросу
-	const filteredProducts = data?.data?.filter(product =>
+	const filteredProducts = allProducts.filter(product =>
 		product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
 		product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
 		product.description?.toLowerCase().includes(searchTerm.toLowerCase())
-	) || []
+	)
 
 	if (isLoading) {
 		return (
@@ -291,6 +313,19 @@ export default function ProductsCatalog({ onEdit }: ProductsCatalogProps) {
 			</div>
 
 
+			{/* Индикатор загрузки следующей страницы */}
+			{isFetchingNextPage && (
+				<div className={styles.loadingMore}>
+					<Spin size="default" />
+					<Text type="secondary" style={{ marginLeft: 8 }}>Загрузка товаров...</Text>
+				</div>
+			)}
+
+			{/* Элемент для отслеживания скролла */}
+			{hasNextPage && !isFetchingNextPage && (
+				<div ref={loadMoreRef} className={styles.scrollTrigger} />
+			)}
+
 			{/* Сообщение, если товары не найдены */}
 			{filteredProducts.length === 0 && searchTerm && (
 				<div className={styles.noResults}>
@@ -298,6 +333,13 @@ export default function ProductsCatalog({ onEdit }: ProductsCatalogProps) {
 					<Text type="secondary" className={styles.noResultsText}>
 						По запросу "{searchTerm}" ничего не найдено
 					</Text>
+				</div>
+			)}
+
+			{/* Сообщение о том, что все товары загружены */}
+			{!hasNextPage && allProducts.length > 0 && !searchTerm && (
+				<div className={styles.endMessage}>
+					<Text type="secondary">Все товары загружены</Text>
 				</div>
 			)}
 		</div>
