@@ -1,9 +1,10 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, Button, Typography, Input, Spin, message, Modal, Upload } from 'antd'
+import { Card, Button, Typography, Input, Spin, message, Upload } from 'antd'
 import { SearchOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { deleteProduct, deleteProductPhoto, uploadProductPhoto } from '../features/products/api'
+import { useQueryClient } from '@tanstack/react-query'
+import { deleteProductPhoto, uploadProductPhoto } from '../features/products/api'
+import { useDeleteProduct } from '../features/products/hooks/useDeleteProduct'
 import { useInfiniteCatalogQuery } from '../features/catalog/hooks'
 import ProductImage from './ProductImage'
 import type { Product } from '../types/product'
@@ -32,29 +33,11 @@ export default function ProductsCatalog({ onEdit }: ProductsCatalogProps) {
 		isFetchingNextPage,
 	} = useInfiniteCatalogQuery()
 
-	const deleteProductMutation = useMutation({
-		mutationFn: (id: number) => deleteProduct(id),
-		onSuccess: () => {
-			message.success('Товар удален')
-			queryClient.invalidateQueries({ queryKey: ['catalog-infinite'] })
-		},
-		onError: () => message.error('Ошибка удаления товара'),
-	})
+	const { deletingId, handleDelete } = useDeleteProduct()
 
 	const handleProductClick = useCallback((product: Product) => {
 		navigate(`/product/${product.id}`)
 	}, [navigate])
-
-	const handleDelete = useCallback((product: Product) => {
-		Modal.confirm({
-			title: 'Удалить товар?',
-			content: `Вы уверены, что хотите удалить товар "${product.name}"?`,
-			okText: 'Удалить',
-			okButtonProps: { danger: true },
-			cancelText: 'Отмена',
-			onOk: () => deleteProductMutation.mutate(product.id),
-		})
-	}, [deleteProductMutation])
 
 	const handlePhotoUpload = useCallback(async (productId: number, file: File) => {
 		try {
@@ -93,6 +76,7 @@ export default function ProductsCatalog({ onEdit }: ProductsCatalogProps) {
 		window.addEventListener('scroll', handleScroll)
 		return () => window.removeEventListener('scroll', handleScroll)
 	}, [fetchNextPage, hasNextPage, isFetchingNextPage])
+
 
 	// Объединяем все товары из всех страниц
 	const allProducts = data?.pages?.flatMap(page => page.data) || []
@@ -141,8 +125,8 @@ export default function ProductsCatalog({ onEdit }: ProductsCatalogProps) {
 				{filteredProducts.map((product) => (
 					<Card
 						key={product.id}
-						hoverable
-						className={styles.card}
+						hoverable={deletingId !== product.id}
+						className={`${styles.card} ${deletingId === product.id ? styles.deleting : ''}`}
 						cover={
 							<div className={styles.imageContainer}>
 								<ProductImage
@@ -161,7 +145,7 @@ export default function ProductsCatalog({ onEdit }: ProductsCatalogProps) {
 											onEdit(product)
 										}}
 									/>
-									<Button
+                  <Button
 										size="small"
 										danger
 										icon={<DeleteOutlined />}
