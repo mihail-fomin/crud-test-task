@@ -27,10 +27,14 @@ class ApiClient {
 	): Promise<ApiResponse<T>> {
 		const url = `${this.baseURL}${endpoint}`
 		
+		// Не добавляем Content-Type для GET запросов без тела
+		const isGetRequest = options.method === 'GET' || !options.method
+		const hasBody = options.body !== undefined
+		
 		const config: RequestInit = {
 			...options,
 			headers: {
-				'Content-Type': 'application/json',
+				...(isGetRequest && !hasBody ? {} : { 'Content-Type': 'application/json' }),
 				...options.headers,
 			},
 		}
@@ -91,7 +95,7 @@ class ApiClient {
 		const isFormData = data instanceof FormData
 		return this.request<T>(endpoint, {
 			method: 'POST',
-			body: isFormData ? data : JSON.stringify(data),
+			body: isFormData ? data : (data ? JSON.stringify(data) : undefined),
 			headers: isFormData ? {} : { 'Content-Type': 'application/json' },
 			...options,
 		})
@@ -101,7 +105,7 @@ class ApiClient {
 		const isFormData = data instanceof FormData
 		return this.request<T>(endpoint, {
 			method: 'PUT',
-			body: isFormData ? data : JSON.stringify(data),
+			body: isFormData ? data : (data ? JSON.stringify(data) : undefined),
 			headers: isFormData ? {} : { 'Content-Type': 'application/json' },
 			...options,
 		})
