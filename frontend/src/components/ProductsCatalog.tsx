@@ -115,18 +115,18 @@ export default function ProductsCatalog({ onEdit, onView }: ProductsCatalogProps
 			</div>
 
 			{/* Сетка товаров */}
-			<div className="grid gap-6 grid-cols-[repeat(auto-fit,minmax(280px,1fr))]">
+			<div className="grid gap-6 grid-cols-[repeat(auto-fit,minmax(210px,1fr))]">
 				{filteredProducts.map((product) => (
 					<Card
 						key={product.id}
 						hoverable
-						className="h-full transition-all duration-300 ease-in-out group hover:-translate-y-1 hover:shadow-lg"
+						className="max-h-[350px] transition-all duration-300 ease-in-out group hover:-translate-y-1 hover:shadow-lg"
 						cover={
-							<div className="relative h-48">
+							<div className="relative">
 								<ProductImage
 									src={product.photoUrl}
 									alt={product.name}
-									className="object-cover w-full h-full"
+									className="object-cover overflow-hidden w-full h-full"
 								/>
 								
 								{/* Кнопки действий */}
