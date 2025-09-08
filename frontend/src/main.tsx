@@ -12,10 +12,8 @@ const { Content } = Layout
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => (
 	<Layout className="min-h-screen">
-		<Content className="py-8">
-			<div className="px-6 mx-auto max-w-7xl">
-				{children}
-			</div>
+		<Content>
+			{children}
 		</Content>
 	</Layout>
 )

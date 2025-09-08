@@ -1,22 +1,22 @@
 import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Card, Button, Typography, Input, Spin, message, Modal, Upload } from 'antd'
-import { SearchOutlined, EditOutlined, EyeOutlined, DeleteOutlined } from '@ant-design/icons'
+import { SearchOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { deleteProduct, deleteProductPhoto, uploadProductPhoto } from '../features/products/api'
 import { useCatalogQuery } from '../features/catalog/hooks'
 import ProductImage from './ProductImage'
 import type { Product } from '../types/product'
+import styles from './ProductsCatalog.module.scss'
 
 const { Title, Text, Paragraph } = Typography
 const { Search } = Input
 
 interface ProductsCatalogProps {
 	onEdit: (product: Product) => void
-	onView: (product: Product) => void
 }
 
-export default function ProductsCatalog({ onEdit, onView }: ProductsCatalogProps) {
+export default function ProductsCatalog({ onEdit }: ProductsCatalogProps) {
 	const [searchTerm, setSearchTerm] = useState('')
 	const [uploadingId, setUploadingId] = useState<number | null>(null)
 	const queryClient = useQueryClient()
@@ -84,7 +84,7 @@ export default function ProductsCatalog({ onEdit, onView }: ProductsCatalogProps
 
 	if (isLoading) {
 		return (
-			<div className="flex justify-center items-center h-64">
+			<div className={styles.loading}>
 				<Spin size="large" />
 			</div>
 		)
@@ -92,17 +92,17 @@ export default function ProductsCatalog({ onEdit, onView }: ProductsCatalogProps
 
 	if (error) {
 		return (
-			<div className="py-8 text-center">
-				<Title level={3} className="text-red-500">Ошибка загрузки товаров</Title>
-				<Text type="secondary">Попробуйте обновить страницу</Text>
+			<div className={styles.error}>
+				<Title level={3} className={styles.errorTitle}>Ошибка загрузки товаров</Title>
+				<Text type="secondary" className={styles.errorText}>Попробуйте обновить страницу</Text>
 			</div>
 		)
 	}
 
 	return (
-		<div className="space-y-6">
+		<div className={styles.container}>
 			{/* Поиск */}
-			<div className="max-w-md">
+			<div className={styles.searchContainer}>
 				<Search
 					placeholder="Поиск товаров..."
 					allowClear
@@ -110,35 +110,27 @@ export default function ProductsCatalog({ onEdit, onView }: ProductsCatalogProps
 					size="large"
 					value={searchTerm}
 					onChange={(e) => setSearchTerm(e.target.value)}
-					className="[&_.ant-input-search-button]:bg-gradient-to-r [&_.ant-input-search-button]:from-blue-500 [&_.ant-input-search-button]:to-purple-600 [&_.ant-input-search-button]:border-none hover:[&_.ant-input-search-button]:from-blue-600 hover:[&_.ant-input-search-button]:to-purple-700"
+					className={styles.searchInput}
 				/>
 			</div>
 
 			{/* Сетка товаров */}
-			<div className="grid gap-6 grid-cols-[repeat(auto-fit,minmax(210px,1fr))]">
+			<div className={styles.grid}>
 				{filteredProducts.map((product) => (
 					<Card
 						key={product.id}
 						hoverable
-						className="max-h-[350px] transition-all duration-300 ease-in-out group hover:-translate-y-1 hover:shadow-lg"
+						className={styles.card}
 						cover={
-							<div className="relative">
+							<div className={styles.imageContainer}>
 								<ProductImage
 									src={product.photoUrl}
 									alt={product.name}
-									className="object-cover overflow-hidden w-full h-full"
+									className={styles.image}
 								/>
 								
 								{/* Кнопки действий */}
-								<div className="flex absolute top-2 right-2 flex-col gap-1 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-									<Button
-										size="small"
-										icon={<EyeOutlined />}
-										onClick={(e) => {
-											e.stopPropagation()
-											onView(product)
-										}}
-									/>
+								<div className={styles.actions}>
 									<Button
 										size="small"
 										icon={<EditOutlined />}
@@ -188,64 +180,111 @@ export default function ProductsCatalog({ onEdit, onView }: ProductsCatalogProps
 							),
 						].filter(Boolean)}
 					>
-						<Card.Meta
-							title={
-								<div className="space-y-2">
-									<Title level={5} className="overflow-hidden mb-1" style={{
+						<div className={styles.content}>
+							{/* Заголовок и артикул */}
+							<div className={styles.header}>
+								<Title 
+									level={5} 
+									className={styles.title}
+									style={{
+										fontSize: window.innerWidth <= 480 ? '0.875rem' : window.innerWidth <= 768 ? '1rem' : '1.125rem',
+										fontWeight: 600,
+										color: '#111827',
+										marginBottom: '0.5rem',
+										lineHeight: 1.4,
 										display: '-webkit-box',
-										WebkitLineClamp: 2,
-										WebkitBoxOrient: 'vertical'
-									}}>
-										{product.name}
-									</Title>
-									<Text type="secondary" className="text-xs">
-										Артикул: {product.sku}
+										WebkitLineClamp: window.innerWidth <= 480 ? 1 : 2,
+										WebkitBoxOrient: 'vertical',
+										overflow: 'hidden',
+										minHeight: window.innerWidth <= 480 ? '1.75rem' : window.innerWidth <= 768 ? '2rem' : '2.5rem'
+									}}
+								>
+									{product.name}
+								</Title>
+								<Text 
+									type="secondary" 
+									className={styles.sku}
+									style={{
+										fontSize: '0.75rem',
+										color: '#6b7280'
+									}}
+								>
+									Артикул: {product.sku}
+								</Text>
+							</div>
+
+							{/* Описание */}
+							{product.description && (
+								<div className={styles.description}>
+									<Paragraph 
+										className={styles.descriptionText}
+										style={{
+											fontSize: window.innerWidth <= 480 ? '0.75rem' : window.innerWidth <= 768 ? '0.8rem' : '0.875rem',
+											color: '#6b7280',
+											margin: 0,
+											display: '-webkit-box',
+											WebkitLineClamp: window.innerWidth <= 480 ? 1 : window.innerWidth <= 768 ? 2 : 3,
+											WebkitBoxOrient: 'vertical',
+											overflow: 'hidden'
+										}}
+									>
+										{product.description}
+									</Paragraph>
+								</div>
+							)}
+
+							{/* Цена */}
+							<div className={styles.priceSection}>
+								<div className={styles.priceRow}>
+									<Text 
+										className={styles.price}
+										style={{
+											fontSize: window.innerWidth <= 480 ? '0.875rem' : window.innerWidth <= 768 ? '1rem' : '1.125rem',
+											fontWeight: 'bold',
+											color: '#2563eb'
+										}}
+									>
+										{product.price.toLocaleString()} ₽
 									</Text>
-								</div>
-							}
-							description={
-								<div className="space-y-3">
-									{product.description && (
-										<Paragraph 
-											ellipsis={{ rows: 2 }} 
-											className="mb-2 text-sm text-gray-600"
+									{product.discountedPrice && (
+										<Text 
+											delete 
+											className={styles.oldPrice}
+											style={{
+												fontSize: '0.875rem',
+												color: '#9ca3af',
+												textDecoration: 'line-through'
+											}}
 										>
-											{product.description}
-										</Paragraph>
+											{product.discountedPrice.toLocaleString()} ₽
+										</Text>
 									)}
-									
-									<div className="space-y-1">
-										<div className="flex gap-2 items-center">
-											<Text className="text-lg font-bold text-blue-600">
-												{product.price.toLocaleString()} ₽
-											</Text>
-											{product.discountedPrice && (
-												<Text 
-													delete 
-													className="text-sm text-gray-500"
-												>
-													{product.discountedPrice.toLocaleString()} ₽
-												</Text>
-											)}
-										</div>
-										{product.discountedPrice && (
-											<Text className="text-xs font-semibold text-green-600">
-												Экономия: {((product.price - product.discountedPrice) / product.price * 100).toFixed(0)}%
-											</Text>
-										)}
-									</div>
 								</div>
-							}
-						/>
-						
-						<div className="pt-3 mt-4 border-t">
-							<Button
-								type="primary"
-								block
-								onClick={() => handleProductClick(product)}
-							>
-								Подробнее
-							</Button>
+								{product.discountedPrice && (
+									<Text 
+										className={styles.discount}
+										style={{
+											fontSize: '0.75rem',
+											fontWeight: 600,
+											color: '#059669'
+										}}
+									>
+										Экономия: {((product.price - product.discountedPrice) / product.price * 100).toFixed(0)}%
+									</Text>
+								)}
+							</div>
+
+							{/* Кнопка "Подробнее" - всегда внизу */}
+							<div className={styles.buttonSection}>
+								<Button
+									type="primary"
+									block
+									className={styles.button}
+									onClick={() => handleProductClick(product)}
+								>
+									Подробнее
+								</Button>
+							</div>
 						</div>
 					</Card>
 				))}
@@ -254,9 +293,9 @@ export default function ProductsCatalog({ onEdit, onView }: ProductsCatalogProps
 
 			{/* Сообщение, если товары не найдены */}
 			{filteredProducts.length === 0 && searchTerm && (
-				<div className="py-8 text-center">
-					<Title level={4}>Товары не найдены</Title>
-					<Text type="secondary">
+				<div className={styles.noResults}>
+					<Title level={4} className={styles.noResultsTitle}>Товары не найдены</Title>
+					<Text type="secondary" className={styles.noResultsText}>
 						По запросу "{searchTerm}" ничего не найдено
 					</Text>
 				</div>

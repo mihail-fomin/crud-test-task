@@ -24,17 +24,18 @@ export default function ProductImage({
 	if (!imageUrl || imageError) {
 		return (
 			<div className={`bg-gray-100 ${className} ${fallbackClassName}`}>
-				<Image className="text-4xl" src="/public/images/product-default-image.png" />
+				<Image className="text-4xl" src="/images/product-default-image.png" />
 			</div>
 		)
 	}
 
 	return (
-		<div className="relative">
+		<div className="relative w-full h-full" style={{ zIndex: 1 }}>
 			<Image
 				src={imageUrl}
 				alt={alt}
 				className={className}
+				style={{ zIndex: 1, width: '100%', height: '100%' }}
 				onError={() => {
 					console.log('Image failed to load:', imageUrl)
 					setImageError(true)
@@ -46,7 +47,10 @@ export default function ProductImage({
 				loading="lazy"
 			/>
 			{imageLoading && (
-				<div className={`absolute inset-0 bg-gray-100 ${fallbackClassName}`}>
+				<div 
+					className={`absolute inset-0 bg-gray-100 ${fallbackClassName}`}
+					style={{ zIndex: 2 }}
+				>
 					<div className="w-8 h-8 rounded-full border-b-2 border-gray-400 animate-spin"></div>
 				</div>
 			)}
