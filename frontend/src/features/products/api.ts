@@ -12,18 +12,18 @@ export type ProductCreate = {
 export type ProductUpdate = Partial<ProductCreate> & { photoUrl?: string | null }
 
 export async function fetchProduct(id: number): Promise<Product> {
-	const { data } = await api.get(`/products/${id}`)
-	return data
+	const response = await api.get<Product>(`/products/${id}`)
+	return response.data
 }
 
 export async function createProduct(payload: ProductCreate): Promise<Product> {
-	const { data } = await api.post('/products', payload)
-	return data
+	const response = await api.post<Product>('/products', payload)
+	return response.data
 }
 
 export async function updateProduct(id: number, payload: ProductUpdate): Promise<Product> {
-	const { data } = await api.put(`/products/${id}`, payload)
-	return data
+	const response = await api.put<Product>(`/products/${id}`, payload)
+	return response.data
 }
 
 export async function deleteProduct(id: number): Promise<void> {
@@ -33,15 +33,15 @@ export async function deleteProduct(id: number): Promise<void> {
 export async function uploadProductPhoto(id: number, file: File): Promise<Product> {
 	const form = new FormData()
 	form.append('file', file)
-	const { data } = await api.post(`/products/${id}/photo`, form, {
+	const response = await api.post<Product>(`/products/${id}/photo`, form, {
 		headers: { 'Content-Type': 'multipart/form-data' },
 	})
-	return data
+	return response.data
 }
 
 export async function deleteProductPhoto(id: number): Promise<Product> {
-	const { data } = await api.delete(`/products/${id}/photo`)
-	return data
+	const response = await api.delete<Product>(`/products/${id}/photo`)
+	return response.data
 }
 
 

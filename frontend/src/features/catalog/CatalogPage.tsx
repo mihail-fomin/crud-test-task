@@ -1,20 +1,47 @@
-import { Input, Select, Space, Button, Modal, Table } from 'antd'
-import { useMemo, useState } from 'react'
+import { Input, Select, Space, Button, Modal, Table, Spin, Alert } from 'antd'
+import { useMemo, useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { useCatalogQuery } from './hooks'
+import { useInfiniteCatalogQuery } from './hooks'
 import ProductForm from '../../components/ProductForm'
+import { useInView } from 'react-intersection-observer'
 
 export default function CatalogPage() {
 	const [search, setSearch] = useSearchParams()
 	const [isModalOpen, setIsModalOpen] = useState(false)
 
-	// Обычная пагинация
-	const { data, isLoading, refetch } = useCatalogQuery()
+	// Бесконечная прокрутка
+	const {
+		data,
+		isLoading,
+		isError,
+		error,
+		fetchNextPage,
+		hasNextPage,
+		isFetchingNextPage,
+		refetch
+	} = useInfiniteCatalogQuery()
 
-	const page = Number(search.get('page') || 1)
 	const limit = Number(search.get('limit') || 12)
 	const sort = search.get('sort') || 'createdAt'
 	const order = (search.get('order') || 'DESC') as 'ASC' | 'DESC'
+
+	// Объединяем все страницы в один массив товаров
+	const allProducts = useMemo(() => {
+		return data?.pages.flatMap(page => page.data) || []
+	}, [data])
+
+	// Настройка для отслеживания скролла
+	const { ref: loadMoreRef, inView } = useInView({
+		threshold: 0.1,
+		rootMargin: '100px'
+	})
+
+	// Автоматическая загрузка следующей страницы при достижении конца списка
+	useEffect(() => {
+		if (inView && hasNextPage && !isFetchingNextPage) {
+			fetchNextPage()
+		}
+	}, [inView, hasNextPage, isFetchingNextPage, fetchNextPage])
 
 	const columns = useMemo(
 		() => [
@@ -49,6 +76,30 @@ export default function CatalogPage() {
 		refetch()
 	}
 
+	// Обработка ошибок
+	if (isError) {
+		return (
+			<div className="space-y-6">
+				<div className="flex justify-between items-center">
+					<h1 className="text-3xl font-bold text-gray-900">Каталог товаров</h1>
+					<Button type="primary" size="large" onClick={() => setIsModalOpen(true)}>
+						Добавить товар
+					</Button>
+				</div>
+				<Alert
+					message="Ошибка загрузки"
+					description={error?.message || 'Произошла ошибка при загрузке товаров'}
+					type="error"
+					showIcon
+					action={
+						<Button size="small" onClick={() => refetch()}>
+							Повторить
+						</Button>
+					}
+				/>
+			</div>
+		)
+	}
 
 	return (
 		<div className="space-y-6">
@@ -66,6 +117,8 @@ export default function CatalogPage() {
 					onSearch={(q) => {
 						const next = new URLSearchParams(search)
 						q ? next.set('q', q) : next.delete('q')
+						// Удаляем page из URL при поиске, чтобы начать с первой страницы
+						next.delete('page')
 						setSearch(next, { replace: true })
 					}}
 					allowClear
@@ -78,6 +131,8 @@ export default function CatalogPage() {
 						const next = new URLSearchParams(search)
 						next.set('sort', s)
 						next.set('order', o)
+						// Удаляем page из URL при изменении сортировки
+						next.delete('page')
 						setSearch(next, { replace: true })
 					}}
 					options={[
@@ -91,20 +146,23 @@ export default function CatalogPage() {
 			<Table
 				rowKey="id"
 				columns={columns as any}
-				dataSource={data?.data}
-				pagination={{
-					current: page,
-					total: data?.total || 0,
-					pageSize: limit,
-					onChange: (p: number, ps: number) => {
-						const next = new URLSearchParams(search)
-						next.set('page', String(p))
-						next.set('limit', String(ps))
-						setSearch(next, { replace: true })
-					},
-				}}
+				dataSource={allProducts}
+				pagination={false}
 				loading={isLoading}
+				scroll={{ y: 600 }}
 			/>
+
+			{/* Индикатор загрузки следующей страницы */}
+			<div ref={loadMoreRef} className="flex justify-center py-4">
+				{isFetchingNextPage && (
+					<Spin size="large" tip="Загрузка товаров..." />
+				)}
+				{!hasNextPage && allProducts.length > 0 && (
+					<div className="text-gray-500 text-center">
+						Все товары загружены ({allProducts.length} шт.)
+					</div>
+				)}
+			</div>
 
 			<Modal
 				title="Добавить товар"

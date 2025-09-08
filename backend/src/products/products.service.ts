@@ -27,7 +27,7 @@ export class ProductsService {
     q?: string;
     minPrice?: number;
     maxPrice?: number;
-  }): Promise<{ data: Product[]; total: number; page: number; limit: number }>{
+  }): Promise<{ data: Product[]; total: number; page: number; limit: number; totalPages: number }>{
     const page = Math.max(1, Number(params.page || 1));
     const limit = Math.max(1, Math.min(100, Number(params.limit || 12)));
 
@@ -53,7 +53,8 @@ export class ProductsService {
     qb.skip((page - 1) * limit).take(limit);
 
     const [data, total] = await qb.getManyAndCount();
-    return { data, total, page, limit };
+    const totalPages = Math.ceil(total / limit);
+    return { data, total, page, limit, totalPages };
   }
 
   async clearPhoto(id: number): Promise<Product> {

@@ -10,8 +10,8 @@ export async function fetchProducts(params: {
 	minPrice?: number
 	maxPrice?: number
 }): Promise<PaginatedResponse<Product>> {
-	const { data } = await api.get('/products', { params })
-	return data
+	const response = await api.get<PaginatedResponse<Product>>('/products', params)
+	return response.data
 }
 
 
