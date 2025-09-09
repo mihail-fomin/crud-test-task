@@ -1,11 +1,12 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, Button, Typography, Input, Spin, message, Upload, Modal } from 'antd'
+import { Card, Button, Typography, Input, Spin, message, Upload } from 'antd'
 import { SearchOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import { deleteProductPhoto, uploadProductPhoto } from '../features/products/api'
 import { useDeleteProduct } from '../features/products/hooks/useDeleteProduct'
-import { useCatalogQuery } from '../features/catalog/hooks'
+import { useInfiniteCatalogQuery } from '../features/catalog/hooks'
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll'
 import ProductImage from './ProductImage'
 import type { Product } from '../types/product'
 import styles from './ProductsCatalog.module.scss'
@@ -22,15 +23,24 @@ export default function ProductsCatalog({ onEdit }: ProductsCatalogProps) {
 	const [uploadingId, setUploadingId] = useState<number | null>(null)
 	const queryClient = useQueryClient()
 	const navigate = useNavigate()
-	const loadMoreRef = useRef<HTMLDivElement>(null)
 
 	const {
 		data,
 		isLoading,
 		error,
-	} = useCatalogQuery()
+		fetchNextPage,
+		hasNextPage,
+		isFetchingNextPage,
+	} = useInfiniteCatalogQuery()
 
-	const { deleteModal, handleDelete, handleDeleteConfirm, handleDeleteCancel, isDeleting } = useDeleteProduct()
+	const { handleDelete, isDeleting } = useDeleteProduct()
+
+	// Хук для бесконечного скролла
+	const { loadMoreRef, isLoading: isScrollLoading } = useInfiniteScroll({
+		hasNextPage,
+		isFetchingNextPage,
+		fetchNextPage,
+	})
 
 	const handleProductClick = useCallback((product: Product) => {
 		navigate(`/product/${product.id}`)
@@ -60,22 +70,6 @@ export default function ProductsCatalog({ onEdit }: ProductsCatalogProps) {
 			message.error('Ошибка удаления фото')
 		}
 	}
-
-	// Обработчик скролла для бесконечной прокрутки
-	useEffect(() => {
-		const handleScroll = () => {
-			if (!loadMoreRef.current || !data?.pages[data.pages.length - 1].hasNextPage || isFetchingNextPage) return
-
-			const rect = loadMoreRef.current.getBoundingClientRect()
-			if (rect.top <= window.innerHeight + 300) {
-				fetchNextPage()
-			}
-		}
-
-		window.addEventListener('scroll', handleScroll)
-		return () => window.removeEventListener('scroll', handleScroll)
-	}, [fetchNextPage, hasNextPage, isFetchingNextPage])
-
 
 	// Объединяем все товары из всех страниц
 	const allProducts = data?.pages?.flatMap(page => page.data) || []
@@ -297,18 +291,6 @@ export default function ProductsCatalog({ onEdit }: ProductsCatalogProps) {
 			</div>
 
 
-			{/* Индикатор загрузки следующей страницы */}
-			{isFetchingNextPage && (
-				<div className={styles.loadingMore}>
-					<Spin size="default" />
-					<Text type="secondary" style={{ marginLeft: 8 }}>Загрузка товаров...</Text>
-				</div>
-			)}
-
-			{/* Элемент для отслеживания скролла */}
-			{hasNextPage && !isFetchingNextPage && (
-				<div ref={loadMoreRef} className={styles.scrollTrigger} />
-			)}
 
 			{/* Сообщение, если товары не найдены */}
 			{filteredProducts.length === 0 && searchTerm && (
@@ -320,21 +302,19 @@ export default function ProductsCatalog({ onEdit }: ProductsCatalogProps) {
 				</div>
 			)}
 
-			{/* Модалка удаления */}
-			<Modal
-				title="Удалить товар?"
-				open={deleteModal.visible}
-				onOk={handleDeleteConfirm}
-				onCancel={handleDeleteCancel}
-				okText="Удалить"
-				cancelText="Отмена"
-				okButtonProps={{ danger: true }}
-				getContainer={() => document.body}
-			>
-				{deleteModal.product && (
-					<p>Вы уверены, что хотите удалить товар "{deleteModal.product.name}"?</p>
-				)}
-			</Modal>
+			{/* Индикатор загрузки следующей страницы */}
+			{isScrollLoading && (
+				<div className={styles.loadingMore}>
+					<Spin size="default" />
+					<Text type="secondary" style={{ marginLeft: 8 }}>Загрузка товаров...</Text>
+				</div>
+			)}
+
+			{/* Элемент для отслеживания скролла */}
+			{hasNextPage && !isScrollLoading && (
+				<div ref={loadMoreRef} className={styles.scrollTrigger} />
+			)}
+
 		</div>
 	)
 }
