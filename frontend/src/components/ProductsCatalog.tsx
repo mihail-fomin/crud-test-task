@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, Button, Typography, Input, Spin, message, Upload } from 'antd'
+import { Card, Button, Typography, Input, Spin, message, Upload, Modal } from 'antd'
 import { SearchOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import { deleteProductPhoto, uploadProductPhoto } from '../features/products/api'
@@ -33,7 +33,7 @@ export default function ProductsCatalog({ onEdit }: ProductsCatalogProps) {
 		isFetchingNextPage,
 	} = useInfiniteCatalogQuery()
 
-	const { handleDelete, isDeleting } = useDeleteProduct()
+	const { handleDelete, isDeleting, showDeleteModal, deleteProduct, confirmDelete, cancelDelete } = useDeleteProduct()
 
 	// Хук для бесконечного скролла
 	const { loadMoreRef, isLoading: isScrollLoading } = useInfiniteScroll({
@@ -310,6 +310,23 @@ export default function ProductsCatalog({ onEdit }: ProductsCatalogProps) {
 			{hasNextPage && !isScrollLoading && (
 				<div ref={loadMoreRef} className={styles.scrollTrigger} />
 			)}
+
+			{/* Модальное окно подтверждения удаления */}
+			<Modal
+				title="Удалить товар?"
+				open={showDeleteModal}
+				onOk={confirmDelete}
+				onCancel={cancelDelete}
+				okText="Удалить"
+				cancelText="Отмена"
+				okButtonProps={{ danger: true, loading: isDeleting }}
+			>
+				{deleteProduct && (
+					<div>
+						<p>Вы уверены, что хотите удалить товар "{deleteProduct.name}"?</p>
+					</div>
+				)}
+			</Modal>
 
 		</div>
 	)

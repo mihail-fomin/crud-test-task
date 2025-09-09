@@ -1,8 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { message, Modal } from 'antd'
-import React from 'react'
-import { deleteProduct } from '../api'
+import { message } from 'antd'
+import { deleteProduct as deleteProductApi } from '../api'
 import type { Product } from '../../../types/product'
 
 interface UseDeleteProductOptions {
@@ -16,18 +15,23 @@ interface UseDeleteProductReturn {
 	cancelDelete: () => void
 	isDeleting: boolean
 	error: Error | null
+	showDeleteModal: boolean
+	deleteProduct: Product | null
+	confirmDelete: () => void
 }
 
 export function useDeleteProduct(options?: UseDeleteProductOptions): UseDeleteProductReturn {
   const [deletingId, setDeletingId] = useState<number | null>(null)
+	const [showDeleteModal, setShowDeleteModal] = useState(false)
+	const [deleteProduct, setDeleteProduct] = useState<Product | null>(null)
 	const queryClient = useQueryClient()
 
 	const deleteProductMutation = useMutation({
-		mutationFn: (id: number) => deleteProduct(id),
+		mutationFn: (id: number) => deleteProductApi(id),
 		onMutate: async (deletedId) => {
 			// Устанавливаем состояние удаления для анимации
 			setDeletingId(deletedId)
-      console.log('deleteProductMutation')
+			console.log('deleteProductMutation onMutate for id:', deletedId)
 
 			// Отменяем любые исходящие рефетчи
 			await queryClient.cancelQueries({ queryKey: ['catalog-infinite'] })
@@ -71,39 +75,21 @@ export function useDeleteProduct(options?: UseDeleteProductOptions): UseDeletePr
 	})
 
 	const handleDelete = useCallback((product: Product) => {
-		console.log('useDeleteProduct handleDelete called', product)
-		const confirmText = `Вы уверены, что хотите удалить товар "${product.name}"?`
-		const skuText = `Артикул: ${product.sku}`
-		const warningText = 'Это действие нельзя отменить.'
-		
-		Modal.confirm({
-			title: 'Удалить товар?',
-			content: React.createElement('div', null,
-				React.createElement('p', null, confirmText),
-				React.createElement('p', { 
-					style: { color: '#666', fontSize: '14px', marginTop: '8px' } 
-				}, skuText),
-				React.createElement('p', { 
-					style: { color: '#dc2626', fontSize: '14px', marginTop: '8px' } 
-				}, warningText)
-			),
-			okText: 'Удалить',
-			okButtonProps: { 
-				danger: true,
-				loading: deletingId === product.id
-			},
-			cancelText: 'Отмена',
-			onOk: () => {
-				console.log('Modal onOk called, calling mutation for product:', product.id)
-				// Вызываем мутацию сразу после подтверждения
-				deleteProductMutation.mutate(product.id)
-			},
-			width: 400,
-		})
-	}, [deleteProductMutation, deletingId])
+		setDeleteProduct(product)
+		setShowDeleteModal(true)
+	}, [])
+
+	const confirmDelete = useCallback(() => {
+		if (deleteProduct) {
+			console.log('confirmDelete called for product:', deleteProduct.id)
+			setShowDeleteModal(false)
+			deleteProductMutation.mutate(deleteProduct.id)
+		}
+	}, [deleteProduct, deleteProductMutation])
 
 	const cancelDelete = useCallback(() => {
-		// Упрощенная функция отмены
+		setShowDeleteModal(false)
+		setDeleteProduct(null)
 		setDeletingId(null)
 	}, [])
 
@@ -113,5 +99,8 @@ export function useDeleteProduct(options?: UseDeleteProductOptions): UseDeletePr
 		cancelDelete,
 		isDeleting: deleteProductMutation.isPending,
 		error: deleteProductMutation.error,
+		showDeleteModal,
+		deleteProduct,
+		confirmDelete,
 	}
 }
