@@ -1,68 +1,117 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { message } from 'antd'
+import { message, Modal } from 'antd'
+import React from 'react'
 import { deleteProduct } from '../api'
 import type { Product } from '../../../types/product'
 
-export function useDeleteProduct() {
-	const [deleteModal, setDeleteModal] = useState<{ visible: boolean; product: Product | null }>({ 
-		visible: false, 
-		product: null 
-	})
+interface UseDeleteProductOptions {
+	onSuccess?: () => void
+	onError?: (error: Error) => void
+}
+
+interface UseDeleteProductReturn {
+	deletingId: number | null
+	handleDelete: (product: Product) => void
+	cancelDelete: () => void
+	isDeleting: boolean
+	error: Error | null
+}
+
+export function useDeleteProduct(options?: UseDeleteProductOptions): UseDeleteProductReturn {
+  const [deletingId, setDeletingId] = useState<number | null>(null)
 	const queryClient = useQueryClient()
 
 	const deleteProductMutation = useMutation({
-		mutationFn: (id: number) => {
-			console.log('Удаляем товар с ID:', id);
-			return deleteProduct(id);
+		mutationFn: (id: number) => deleteProduct(id),
+		onMutate: async (deletedId) => {
+			// Устанавливаем состояние удаления для анимации
+			setDeletingId(deletedId)
+      console.log('deleteProductMutation')
+
+			// Отменяем любые исходящие рефетчи
+			await queryClient.cancelQueries({ queryKey: ['catalog-infinite'] })
+
+			// Сохраняем предыдущее значение
+			const previousData = queryClient.getQueryData(['catalog-infinite'])
+
+			// Оптимистично обновляем данные
+			queryClient.setQueryData(['catalog-infinite'], (old: any) => {
+				if (!old) return old
+				
+				return {
+					...old,
+					pages: old.pages.map((page: any) => ({
+						...page,
+						data: page.data.filter((product: Product) => product.id !== deletedId)
+					}))
+				}
+			})
+
+			return { previousData }
 		},
-		onSuccess: async (_, deletedId) => {
-			console.log('Товар успешно удален, обновляем кэш...', deletedId);
+		onSuccess: () => {
 			message.success('Товар удален')
-			
-			// Обновляем все запросы каталога (с любыми параметрами)
-			await queryClient.invalidateQueries({ 
-				queryKey: ['catalog'],
-				predicate: (query) => query.queryKey[0] === 'catalog'
-			})
-			await queryClient.invalidateQueries({ 
-				queryKey: ['catalog-infinite'],
-				predicate: (query) => query.queryKey[0] === 'catalog-infinite'
-			})
-			
-			console.log('Кэш обновлен');
+			setDeletingId(null)
+			options?.onSuccess?.()
 		},
-		onError: (error) => {
-			console.error('Ошибка удаления товара:', error);
+		onError: (error, _, context) => {
+			// Восстанавливаем предыдущее состояние при ошибке
+			if (context?.previousData) {
+				queryClient.setQueryData(['catalog-infinite'], context.previousData)
+			}
 			message.error('Ошибка удаления товара')
+			setDeletingId(null)
+			options?.onError?.(error)
+		},
+		onSettled: () => {
+			// Всегда рефетчим после мутации
+			queryClient.invalidateQueries({ queryKey: ['catalog-infinite'] })
 		},
 	})
 
-	const handleDelete = (product: Product) => {
-		console.log('=== handleDelete вызвана ===');
-		console.log('product: ', product);
-		console.log('Открываем обычную модалку');
-		setDeleteModal({ visible: true, product });
-	}
+	const handleDelete = useCallback((product: Product) => {
+		console.log('useDeleteProduct handleDelete called', product)
+		const confirmText = `Вы уверены, что хотите удалить товар "${product.name}"?`
+		const skuText = `Артикул: ${product.sku}`
+		const warningText = 'Это действие нельзя отменить.'
+		
+		Modal.confirm({
+			title: 'Удалить товар?',
+			content: React.createElement('div', null,
+				React.createElement('p', null, confirmText),
+				React.createElement('p', { 
+					style: { color: '#666', fontSize: '14px', marginTop: '8px' } 
+				}, skuText),
+				React.createElement('p', { 
+					style: { color: '#dc2626', fontSize: '14px', marginTop: '8px' } 
+				}, warningText)
+			),
+			okText: 'Удалить',
+			okButtonProps: { 
+				danger: true,
+				loading: deletingId === product.id
+			},
+			cancelText: 'Отмена',
+			onOk: () => {
+				console.log('Modal onOk called, calling mutation for product:', product.id)
+				// Вызываем мутацию сразу после подтверждения
+				deleteProductMutation.mutate(product.id)
+			},
+			width: 400,
+		})
+	}, [deleteProductMutation, deletingId])
 
-	const handleDeleteConfirm = () => {
-		if (deleteModal.product) {
-			console.log('onOk вызван, удаляем товар:', deleteModal.product.id);
-			deleteProductMutation.mutate(deleteModal.product.id);
-			setDeleteModal({ visible: false, product: null });
-		}
-	}
-
-	const handleDeleteCancel = () => {
-		console.log('onCancel вызван');
-		setDeleteModal({ visible: false, product: null });
-	}
+	const cancelDelete = useCallback(() => {
+		// Упрощенная функция отмены
+		setDeletingId(null)
+	}, [])
 
 	return {
-		deleteModal,
+		deletingId,
 		handleDelete,
-		handleDeleteConfirm,
-		handleDeleteCancel,
+		cancelDelete,
 		isDeleting: deleteProductMutation.isPending,
+		error: deleteProductMutation.error,
 	}
 }

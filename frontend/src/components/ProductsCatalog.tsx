@@ -1,11 +1,11 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, Button, Typography, Input, Spin, message, Modal, Upload } from 'antd'
+import { Card, Button, Typography, Input, Spin, message, Upload, Modal } from 'antd'
 import { SearchOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import { deleteProductPhoto, uploadProductPhoto } from '../features/products/api'
-import { useCatalogQuery } from '../features/catalog/hooks'
 import { useDeleteProduct } from '../features/products/hooks/useDeleteProduct'
+import { useCatalogQuery } from '../features/catalog/hooks'
 import ProductImage from './ProductImage'
 import type { Product } from '../types/product'
 import styles from './ProductsCatalog.module.scss'
@@ -22,6 +22,7 @@ export default function ProductsCatalog({ onEdit }: ProductsCatalogProps) {
 	const [uploadingId, setUploadingId] = useState<number | null>(null)
 	const queryClient = useQueryClient()
 	const navigate = useNavigate()
+	const loadMoreRef = useRef<HTMLDivElement>(null)
 
 	const {
 		data,
@@ -29,13 +30,7 @@ export default function ProductsCatalog({ onEdit }: ProductsCatalogProps) {
 		error,
 	} = useCatalogQuery()
 
-	// Используем хук для удаления товара
-	const {
-		deleteModal,
-		handleDelete,
-		handleDeleteConfirm,
-		handleDeleteCancel
-	} = useDeleteProduct()
+	const { deleteModal, handleDelete, handleDeleteConfirm, handleDeleteCancel, isDeleting } = useDeleteProduct()
 
 	const handleProductClick = useCallback((product: Product) => {
 		navigate(`/product/${product.id}`)
@@ -66,12 +61,31 @@ export default function ProductsCatalog({ onEdit }: ProductsCatalogProps) {
 		}
 	}
 
+	// Обработчик скролла для бесконечной прокрутки
+	useEffect(() => {
+		const handleScroll = () => {
+			if (!loadMoreRef.current || !data?.pages[data.pages.length - 1].hasNextPage || isFetchingNextPage) return
+
+			const rect = loadMoreRef.current.getBoundingClientRect()
+			if (rect.top <= window.innerHeight + 300) {
+				fetchNextPage()
+			}
+		}
+
+		window.addEventListener('scroll', handleScroll)
+		return () => window.removeEventListener('scroll', handleScroll)
+	}, [fetchNextPage, hasNextPage, isFetchingNextPage])
+
+
+	// Объединяем все товары из всех страниц
+	const allProducts = data?.pages?.flatMap(page => page.data) || []
+
 	// Фильтрация товаров по поисковому запросу
-	const filteredProducts = data?.data?.filter(product =>
+	const filteredProducts = allProducts.filter(product =>
 		product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
 		product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
 		product.description?.toLowerCase().includes(searchTerm.toLowerCase())
-	) || []
+	)
 
 	if (isLoading) {
 		return (
@@ -110,8 +124,8 @@ export default function ProductsCatalog({ onEdit }: ProductsCatalogProps) {
 				{filteredProducts.map((product) => (
 					<Card
 						key={product.id}
-						hoverable
-						className={styles.card}
+						hoverable={!isDeleting}
+						className={`${styles.card} ${isDeleting ? styles.deleting : ''}`}
 						cover={
 							<div className={styles.imageContainer}>
 								<ProductImage
@@ -130,7 +144,7 @@ export default function ProductsCatalog({ onEdit }: ProductsCatalogProps) {
 											onEdit(product)
 										}}
 									/>
-									<Button
+                                    <Button
 										size="small"
 										danger
 										icon={<DeleteOutlined />}
@@ -282,6 +296,19 @@ export default function ProductsCatalog({ onEdit }: ProductsCatalogProps) {
 				))}
 			</div>
 
+
+			{/* Индикатор загрузки следующей страницы */}
+			{isFetchingNextPage && (
+				<div className={styles.loadingMore}>
+					<Spin size="default" />
+					<Text type="secondary" style={{ marginLeft: 8 }}>Загрузка товаров...</Text>
+				</div>
+			)}
+
+			{/* Элемент для отслеживания скролла */}
+			{hasNextPage && !isFetchingNextPage && (
+				<div ref={loadMoreRef} className={styles.scrollTrigger} />
+			)}
 
 			{/* Сообщение, если товары не найдены */}
 			{filteredProducts.length === 0 && searchTerm && (

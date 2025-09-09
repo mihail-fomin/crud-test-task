@@ -44,6 +44,25 @@
   }
 }
 
+.deleting {
+  opacity: 0.5;
+  transform: scale(0.95);
+  pointer-events: none;
+  transition: all 0.3s ease;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.1);
+    z-index: 10;
+    border-radius: 12px;
+  }
+}
+
 .imageContainer {
   position: relative;
   height: 12rem;
@@ -301,6 +320,27 @@
 .noResultsText {
   font-size: 1.125rem;
   color: #6b7280;
+}
+
+// Стили для бесконечной прокрутки
+.loadingMore {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem 1rem;
+  margin: 1rem 0;
+}
+
+.scrollTrigger {
+  height: 1px;
+  width: 100%;
+}
+
+.endMessage {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #6b7280;
+  font-size: 0.875rem;
 }
 
 // Адаптивность
