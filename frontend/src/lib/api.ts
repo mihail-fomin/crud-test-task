@@ -54,7 +54,16 @@ class ApiClient {
 				} as ApiError
 			}
 
-			const data = await response.json()
+			// Проверяем, есть ли контент для парсинга
+			const contentType = response.headers.get('content-type')
+			let data = null
+			
+			if (contentType && contentType.includes('application/json')) {
+				const text = await response.text()
+				if (text.trim()) {
+					data = JSON.parse(text)
+				}
+			}
 			
 			return {
 				data,

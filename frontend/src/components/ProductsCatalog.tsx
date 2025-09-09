@@ -2,9 +2,10 @@ import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Card, Button, Typography, Input, Spin, message, Modal, Upload } from 'antd'
 import { SearchOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { deleteProduct, deleteProductPhoto, uploadProductPhoto } from '../features/products/api'
+import { useQueryClient } from '@tanstack/react-query'
+import { deleteProductPhoto, uploadProductPhoto } from '../features/products/api'
 import { useCatalogQuery } from '../features/catalog/hooks'
+import { useDeleteProduct } from '../features/products/hooks/useDeleteProduct'
 import ProductImage from './ProductImage'
 import type { Product } from '../types/product'
 import styles from './ProductsCatalog.module.scss'
@@ -28,29 +29,17 @@ export default function ProductsCatalog({ onEdit }: ProductsCatalogProps) {
 		error,
 	} = useCatalogQuery()
 
-	const deleteProductMutation = useMutation({
-		mutationFn: (id: number) => deleteProduct(id),
-		onSuccess: () => {
-			message.success('Товар удален')
-			queryClient.invalidateQueries({ queryKey: ['catalog'] })
-		},
-		onError: () => message.error('Ошибка удаления товара'),
-	})
+	// Используем хук для удаления товара
+	const {
+		deleteModal,
+		handleDelete,
+		handleDeleteConfirm,
+		handleDeleteCancel
+	} = useDeleteProduct()
 
 	const handleProductClick = useCallback((product: Product) => {
 		navigate(`/product/${product.id}`)
 	}, [navigate])
-
-	const handleDelete = useCallback((product: Product) => {
-		Modal.confirm({
-			title: 'Удалить товар?',
-			content: `Вы уверены, что хотите удалить товар "${product.name}"?`,
-			okText: 'Удалить',
-			okButtonProps: { danger: true },
-			cancelText: 'Отмена',
-			onOk: () => deleteProductMutation.mutate(product.id),
-		})
-	}, [deleteProductMutation])
 
 	const handlePhotoUpload = useCallback(async (productId: number, file: File) => {
 		try {
@@ -58,6 +47,7 @@ export default function ProductsCatalog({ onEdit }: ProductsCatalogProps) {
 			await uploadProductPhoto(productId, file)
 			message.success('Фото загружено')
 			queryClient.invalidateQueries({ queryKey: ['catalog'] })
+			queryClient.invalidateQueries({ queryKey: ['catalog-infinite'] })
 		} catch (error) {
 			message.error('Ошибка загрузки фото')
 		} finally {
@@ -65,15 +55,16 @@ export default function ProductsCatalog({ onEdit }: ProductsCatalogProps) {
 		}
 	}, [queryClient])
 
-	const handleDeletePhoto = useCallback(async (productId: number) => {
+	const handleDeletePhoto = async (productId: number) => {
 		try {
 			await deleteProductPhoto(productId)
 			message.success('Фото удалено')
 			queryClient.invalidateQueries({ queryKey: ['catalog'] })
+			queryClient.invalidateQueries({ queryKey: ['catalog-infinite'] })
 		} catch (error) {
 			message.error('Ошибка удаления фото')
 		}
-	}, [queryClient])
+	}
 
 	// Фильтрация товаров по поисковому запросу
 	const filteredProducts = data?.data?.filter(product =>
@@ -144,6 +135,7 @@ export default function ProductsCatalog({ onEdit }: ProductsCatalogProps) {
 										danger
 										icon={<DeleteOutlined />}
 										onClick={(e) => {
+											console.log('Кнопка удаления нажата!', product);
 											e.stopPropagation()
 											handleDelete(product)
 										}}
@@ -300,6 +292,22 @@ export default function ProductsCatalog({ onEdit }: ProductsCatalogProps) {
 					</Text>
 				</div>
 			)}
+
+			{/* Модалка удаления */}
+			<Modal
+				title="Удалить товар?"
+				open={deleteModal.visible}
+				onOk={handleDeleteConfirm}
+				onCancel={handleDeleteCancel}
+				okText="Удалить"
+				cancelText="Отмена"
+				okButtonProps={{ danger: true }}
+				getContainer={() => document.body}
+			>
+				{deleteModal.product && (
+					<p>Вы уверены, что хотите удалить товар "{deleteModal.product.name}"?</p>
+				)}
+			</Modal>
 		</div>
 	)
 }
