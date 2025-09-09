@@ -1,19 +1,24 @@
 import { useState } from 'react'
-import { Image } from 'antd'
+import { Image, Upload } from 'antd'
 import { getProductImageUrl } from '../utils/imageUtils'
+import styles from './ProductsCatalog.module.scss'
 
 interface ProductImageProps {
 	src?: string | null
 	alt: string
 	className?: string
 	fallbackClassName?: string
+	onUpload?: (file: File) => void
+	uploading?: boolean
 }
 
 export default function ProductImage({ 
 	src, 
 	alt, 
 	className = "object-cover w-full h-full",
-	fallbackClassName = "flex items-center justify-center text-gray-400"
+	fallbackClassName = "flex items-center justify-center text-gray-400",
+	onUpload,
+	uploading = false
 }: ProductImageProps) {
 	const [imageError, setImageError] = useState(false)
 	const [imageLoading, setImageLoading] = useState(true)
@@ -22,11 +27,37 @@ export default function ProductImage({
 
 	// Если нет URL или произошла ошибка загрузки
 	if (!imageUrl || imageError) {
-		return (
-			<div className={`bg-gray-100 ${className} ${fallbackClassName}`}>
+		const defaultImageContent = (
+			<div className={`relative bg-gray-100 ${className} ${fallbackClassName}`}>
 				<Image className="text-4xl" src="/images/product-default-image.png" />
+				{onUpload && (
+					<div className={styles.defaultImageHover}>
+						<div className={styles.uploadHint}>
+							{uploading ? 'Загрузка...' : 'Загрузить фото'}
+						</div>
+					</div>
+				)}
 			</div>
 		)
+
+		// Если есть обработчик загрузки, оборачиваем в Upload
+		if (onUpload) {
+			return (
+				<Upload
+					showUploadList={false}
+					accept="image/*"
+					beforeUpload={(file) => {
+						onUpload(file)
+						return false
+					}}
+					disabled={uploading}
+				>
+					{defaultImageContent}
+				</Upload>
+			)
+		}
+
+		return defaultImageContent
 	}
 
 	return (

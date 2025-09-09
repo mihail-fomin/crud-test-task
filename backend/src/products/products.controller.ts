@@ -66,9 +66,22 @@ export class ProductsController {
           cb(null, filename);
         },
       }),
+      fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+          cb(null, true);
+        } else {
+          cb(new Error('Только изображения разрешены'), false);
+        }
+      },
+      limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB лимит
+      },
     }),
   )
   async uploadPhoto(@Param('id', ParseIntPipe) id: number, @UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new Error('Файл не найден');
+    }
     const url = `/uploads/${file.filename}`;
     return this.productsService.update(id, { photoUrl: url } as any);
   }

@@ -31,7 +31,6 @@ export function useInfiniteScroll({
 		return () => window.removeEventListener('scroll', handleScroll)
 	}, [fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, threshold])
 
-	// Сбрасываем локальное состояние загрузки только когда React Query завершает загрузку
 	useEffect(() => {
 		if (!isFetchingNextPage && isLoading) {
 			setIsLoading(false)

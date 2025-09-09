@@ -27,14 +27,15 @@ class ApiClient {
 	): Promise<ApiResponse<T>> {
 		const url = `${this.baseURL}${endpoint}`
 		
-		// Не добавляем Content-Type для GET запросов без тела
+		// Не добавляем Content-Type для GET запросов без тела или FormData
 		const isGetRequest = options.method === 'GET' || !options.method
 		const hasBody = options.body !== undefined
+		const isFormData = options.body instanceof FormData
 		
 		const config: RequestInit = {
 			...options,
 			headers: {
-				...(isGetRequest && !hasBody ? {} : { 'Content-Type': 'application/json' }),
+				...(isGetRequest && !hasBody ? {} : (isFormData ? {} : { 'Content-Type': 'application/json' })),
 				...options.headers,
 			},
 		}
