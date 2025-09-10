@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { json, urlencoded } from 'express';
+import { HttpExceptionFilter } from './filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -32,6 +33,7 @@ async function bootstrap() {
   app.use(urlencoded({ extended: true, limit: '50mb' }));
   
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  app.useGlobalFilters(new HttpExceptionFilter());
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

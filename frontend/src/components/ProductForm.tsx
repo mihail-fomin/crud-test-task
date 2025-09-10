@@ -1,6 +1,8 @@
 import { Form, Input, InputNumber, Button, Space, message, Upload } from 'antd'
 import { useState } from 'react'
 import { createProduct, updateProduct, uploadProductPhoto, type ProductCreate, type ProductUpdate } from '../features/products/api'
+import { showErrorNotification } from '../utils/errorHandler'
+import { useErrorModal } from '../hooks/useErrorModal'
 import type { Product } from '../types/product'
 
 interface ProductFormProps {
@@ -19,14 +21,26 @@ export default function ProductForm({
 	const [form] = Form.useForm()
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [uploadingPhoto, setUploadingPhoto] = useState(false)
+	
+	// Используем хук для обработки ошибок
+	const { showErrorModal, ModalComponent } = useErrorModal()
 
 	const handlePhotoUpload = async (file: File, productId: number) => {
 		setUploadingPhoto(true)
 		try {
 			await uploadProductPhoto(productId, file)
 			message.success('Фото загружено')
-		} catch (error) {
-			message.error('Ошибка загрузки фото')
+		} catch (error: any) {
+			console.log('Ошибка загрузки фото:', error)
+			// Показываем модалку с ошибкой
+			showErrorModal({
+				message: error.response?.data?.message || error.message || 'Ошибка загрузки файла',
+				status: error.response?.status
+			})
+			// Также показываем уведомление для совместимости
+			showErrorNotification(error, () => {
+				handlePhotoUpload(file, productId)
+			})
 		} finally {
 			setUploadingPhoto(false)
 		}
@@ -65,16 +79,16 @@ export default function ProductForm({
 		} catch (error: any) {
 			console.error('Ошибка сохранения товара:', error)
 			
-			// Более детальная обработка ошибок
-			if (error.response?.status === 400) {
-				message.error('Проверьте правильность введенных данных')
-			} else if (error.response?.status === 409) {
-				message.error('Товар с таким артикулом уже существует')
-			} else if (error.response?.status >= 500) {
-				message.error('Ошибка сервера. Попробуйте позже')
-			} else {
-				message.error('Ошибка сохранения товара')
-			}
+			// Показываем модалку с ошибкой
+			showErrorModal({
+				message: error.response?.data?.message || error.message || 'Ошибка сохранения товара',
+				status: error.response?.status
+			})
+			
+			// Также показываем уведомление для совместимости
+			showErrorNotification(error, () => {
+				handleSubmit(values)
+			})
 		} finally {
 			setIsSubmitting(false)
 		}
@@ -205,6 +219,9 @@ export default function ProductForm({
 					</Space>
 				</Form.Item>
 			)}
+			
+			{/* Модалка для ошибок */}
+			<ModalComponent />
 		</Form>
 	)
 }

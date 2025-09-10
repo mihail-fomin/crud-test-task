@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { message } from 'antd'
 import { deleteProduct as deleteProductApi } from '../api'
+import { showErrorNotification } from '../../../utils/errorHandler'
 import type { Product } from '../../../types/product'
 
 interface UseDeleteProductOptions {
@@ -64,7 +65,14 @@ export function useDeleteProduct(options?: UseDeleteProductOptions): UseDeletePr
 			if (context?.previousData) {
 				queryClient.setQueryData(['catalog-infinite'], context.previousData)
 			}
-			message.error('Ошибка удаления товара')
+			
+			// Показываем улучшенное уведомление об ошибке
+			showErrorNotification(error, () => {
+				if (deleteProduct) {
+					deleteProductMutation.mutate(deleteProduct.id)
+				}
+			})
+			
 			setDeletingId(null)
 			options?.onError?.(error)
 		},
