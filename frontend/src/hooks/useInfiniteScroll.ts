@@ -28,8 +28,9 @@ export function useInfiniteScroll({
 		}
 
 		window.addEventListener('scroll', handleScroll)
+
 		return () => window.removeEventListener('scroll', handleScroll)
-	}, [fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, threshold])
+	}, [fetchNextPage, hasNextPage, isFetchingNextPage, isLoading])
 
 	useEffect(() => {
 		if (!isFetchingNextPage && isLoading) {

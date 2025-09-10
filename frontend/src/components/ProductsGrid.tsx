@@ -68,7 +68,7 @@ export default function ProductsGrid({
       </div>
 
       {/* Индикатор загрузки следующей страницы */}
-      {isScrollLoading && (
+      {hasNextPage && (
         <div className={styles.loadingMore}>
           <Spin size="default" />
           <Text type="secondary" style={{ marginLeft: 8 }}>Загрузка товаров...</Text>
