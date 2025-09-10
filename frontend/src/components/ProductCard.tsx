@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, Button, Typography, Upload, message } from 'antd'
-import { EditOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons'
+import { Card, Button, Typography, message, Modal } from 'antd'
+import { EditOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import { deleteProductPhoto, uploadProductPhoto } from '../features/products/api'
 import ProductImage from './ProductImage'
@@ -39,6 +39,7 @@ export default function ProductCard({
         isRetrying: false,
         retryCount: 0
     })
+    const [deletePhotoModalVisible, setDeletePhotoModalVisible] = useState(false)
 
     const handleProductClick = useCallback((product: Product) => {
         navigate(`/product/${product.id}`)
@@ -93,16 +94,25 @@ export default function ProductCard({
         }
     }, [queryClient, setUploadingId, retryState.retryCount])
 
-    const handleDeletePhoto = async (productId: number) => {
+    const handleDeletePhotoClick = () => {
+        setDeletePhotoModalVisible(true)
+    }
+
+    const handleDeletePhotoConfirm = async () => {
         try {
-            await deleteProductPhoto(productId)
+            await deleteProductPhoto(product.id)
             message.success('Фото удалено')
             queryClient.invalidateQueries({ queryKey: ['catalog'] })
             queryClient.invalidateQueries({ queryKey: ['catalog-infinite'] })
+            setDeletePhotoModalVisible(false)
         } catch (error: any) {
             console.error('Ошибка удаления фото:', error)
-                showErrorModal(error)
+            showErrorModal(error)
         }
+    }
+
+    const handleDeletePhotoCancel = () => {
+        setDeletePhotoModalVisible(false)
     }
 
     return (
@@ -118,64 +128,13 @@ export default function ProductCard({
                         alt={product.name}
                         className={styles.image}
                         onUpload={(file) => handlePhotoUpload(product.id, file)}
+                        onDelete={handleDeletePhotoClick}
                         uploading={uploadingId === product.id}
                     />
                     
-                    {/* Кнопки действий */}
-                    <div className={styles.actions}>
-                        <Button
-                            size="small"
-                            icon={<EditOutlined />}
-                            onClick={(e) => {
-                                e.stopPropagation()
-                                onEdit(product)
-                            }}
-                        />
-                        <Button
-                            size="small"
-                            danger
-                            icon={<DeleteOutlined />}
-                            onClick={(e) => {
-                                e.stopPropagation()
-                                onDelete(product)
-                            }}
-                        />
-                    </div>
                 </div>
             }
-            actions={[
-                <Upload
-                    key="upload"
-                    showUploadList={false}
-                    accept="image/*"
-                    beforeUpload={(file) => {
-                        handlePhotoUpload(product.id, file)
-                        return false
-                    }}
-                >
-                    <Button
-                        size="small"
-                        loading={uploadingId === product.id}
-                        disabled={uploadingId === product.id}
-                        icon={retryState.isRetrying ? <ReloadOutlined spin /> : undefined}
-                    >
-                        {retryState.isRetrying 
-                            ? `Повтор ${retryState.retryCount}/3` 
-                            : product.photoUrl ? 'Изменить фото' : 'Добавить фото'
-                        }
-                    </Button>
-                </Upload>,
-                product.photoUrl && (
-                    <Button
-                        key="delete-photo"
-                        size="small"
-                        danger
-                        onClick={() => handleDeletePhoto(product.id)}
-                    >
-                        Удалить фото
-                    </Button>
-                ),
-            ].filter(Boolean)}
+            actions={[]}
         >
             <div className={styles.content}>
                 {/* Заголовок и артикул */}
@@ -241,21 +200,61 @@ export default function ProductCard({
                     )}
                 </div>
 
-                {/* Кнопка "Подробнее" - всегда внизу */}
+                {/* Кнопки действий - всегда внизу */}
                 <div className={styles.buttonSection}>
-                    <Button
-                        type="primary"
-                        block
-                        className={styles.button}
-                        onClick={() => handleProductClick(product)}
-                    >
-                        Подробнее
-                    </Button>
+                    <div className={styles.buttonRow}>
+                        <Button
+                            type="primary"
+                            className={styles.detailsButton}
+                            onClick={() => handleProductClick(product)}
+                        >
+                            Подробнее
+                        </Button>
+                        <div className={styles.actionButtons}>
+                            <Button
+                                size="small"
+                                icon={<EditOutlined />}
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    onEdit(product)
+                                }}
+                                title="Редактировать товар"
+                            />
+                            <Button
+                                size="small"
+                                danger
+                                icon={<DeleteOutlined />}
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    onDelete(product)
+                                }}
+                                title="Удалить товар"
+                            />
+                        </div>
+                    </div>
                 </div>
             </div>
         </Card>
 
         <ModalComponent />
+        
+        {/* Модальное окно подтверждения удаления фотографии */}
+        <Modal
+            title={
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>Удаление фотографии</span>
+                </div>
+            }
+            open={deletePhotoModalVisible}
+            onOk={handleDeletePhotoConfirm}
+            onCancel={handleDeletePhotoCancel}
+            okText="Удалить"
+            cancelText="Отмена"
+            okButtonProps={{ danger: true }}
+            centered
+        >
+            <p>Вы уверены, что хотите удалить фотографию товара?</p>
+        </Modal>
         </>
     )
 }

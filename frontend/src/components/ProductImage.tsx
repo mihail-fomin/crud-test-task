@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Image, Upload } from 'antd'
+import { Image, Upload, Button, Tooltip } from 'antd'
+import { CloseOutlined } from '@ant-design/icons'
 import { getProductImageUrl } from '../utils/imageUtils'
 import styles from './ProductsCatalog.module.scss'
 
@@ -9,6 +10,7 @@ interface ProductImageProps {
 	className?: string
 	fallbackClassName?: string
 	onUpload?: (file: File) => void
+	onDelete?: () => void
 	uploading?: boolean
 }
 
@@ -18,6 +20,7 @@ export default function ProductImage({
 	className = "object-cover w-full h-full",
 	fallbackClassName = "flex items-center justify-center text-gray-400",
 	onUpload,
+	onDelete,
 	uploading = false
 }: ProductImageProps) {
 	const [imageError, setImageError] = useState(false)
@@ -84,6 +87,20 @@ export default function ProductImage({
 				>
 					<div className="w-8 h-8 rounded-full border-b-2 border-gray-400 animate-spin"></div>
 				</div>
+			)}
+			{onDelete && !imageLoading && (
+				<Tooltip title="Удалить фотографию" placement="top">
+					<Button
+						type="text"
+						danger
+						icon={<CloseOutlined />}
+						className={styles.deletePhotoButton}
+						onClick={(e) => {
+							e.stopPropagation()
+							onDelete()
+						}}
+					/>
+				</Tooltip>
 			)}
 		</div>
 	)

@@ -162,20 +162,54 @@
   background: white;
 }
 
-.actions {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  z-index: 3 !important;
+// Кнопка удаления фотографии поверх изображения
+.deletePhotoButton {
+  position: absolute !important;
+  top: 0.5rem !important;
+  right: 0.5rem !important;
+  z-index: 10 !important;
+  width: 2rem !important;
+  height: 2rem !important;
+  min-width: 2rem !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(0, 0, 0, 0.6) !important;
+  border: none !important;
+  border-radius: 50% !important;
+  color: white !important;
+  opacity: 0 !important;
+  transition: all 0.3s ease !important;
+  
+  &:hover {
+    background: rgba(220, 38, 38, 0.8) !important;
+    color: white !important;
+    transform: scale(1.1) !important;
+  }
+  
+  .anticon {
+    font-size: 0.875rem !important;
+  }
 }
 
-.card:hover .actions {
-  opacity: 1;
+.imageContainer:hover .deletePhotoButton {
+  opacity: 1 !important;
+}
+
+// Адаптивность для кнопки удаления
+@media (max-width: 480px) {
+  .deletePhotoButton {
+    width: 1.75rem !important;
+    height: 1.75rem !important;
+    min-width: 1.75rem !important;
+    top: 0.25rem !important;
+    right: 0.25rem !important;
+    
+    .anticon {
+      font-size: 0.75rem !important;
+    }
+  }
 }
 
 .content {
@@ -332,10 +366,38 @@
 
 .buttonSection {
   border-top: 1px solid #e5e7eb;
+  padding-top: 0.75rem;
 }
 
-.button {
+.buttonRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   width: 100%;
+}
+
+.detailsButton {
+  flex: 1;
+  min-width: 0;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+// Адаптивность для кнопок
+@media (max-width: 480px) {
+  .buttonRow {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .actionButtons {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 // Состояния загрузки и ошибки
