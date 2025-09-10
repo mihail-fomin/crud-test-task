@@ -3,9 +3,9 @@ import { Typography, Input, Spin, Modal, Button } from 'antd'
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useDeleteProduct } from '../features/products/hooks/useDeleteProduct'
 import { useInfiniteCatalogQuery } from '../features/catalog/hooks'
-import { useInfiniteScroll } from '../hooks/useInfiniteScroll'
 import { handleApiError } from '../utils/errorHandler'
-import ProductCard from './ProductCard'
+import ProductsGrid from './ProductsGrid'
+import SortDropdown from './SortDropdown'
 import type { Product } from '../types/product'
 import styles from './ProductsCatalog.module.scss'
 
@@ -31,13 +31,6 @@ export default function ProductsCatalog({ onEdit }: ProductsCatalogProps) {
 	} = useInfiniteCatalogQuery()
 
 	const { handleDelete, isDeleting, showDeleteModal, deleteProduct, confirmDelete, cancelDelete } = useDeleteProduct()
-
-	// Хук для бесконечного скролла
-	const { loadMoreRef, isLoading: isScrollLoading } = useInfiniteScroll({
-		hasNextPage,
-		isFetchingNextPage,
-		fetchNextPage,
-	})
 
 	// Объединяем все товары из всех страниц
 	const allProducts = data?.pages?.flatMap(page => page.data) || []
@@ -80,8 +73,10 @@ export default function ProductsCatalog({ onEdit }: ProductsCatalogProps) {
 
 	return (
 		<div className={styles.container}>
-			{/* Поиск */}
-			<div className={styles.searchContainer}>
+			{/* Поиск и сортировка */}
+
+            <div className={styles.searchContainer}>
+            <SortDropdown />
 				<Search
 					placeholder="Поиск товаров..."
 					allowClear
@@ -94,42 +89,18 @@ export default function ProductsCatalog({ onEdit }: ProductsCatalogProps) {
 			</div>
 
 			{/* Сетка товаров */}
-			<div className={styles.grid}>
-				{filteredProducts.map((product) => (
-					<ProductCard
-						key={product.id}
-						product={product}
-						onEdit={onEdit}
-						onDelete={handleDelete}
-						uploadingId={uploadingId}
-						setUploadingId={setUploadingId}
-						isDeleting={isDeleting}
-					/>
-				))}
-			</div>
-
-			{/* Сообщение, если товары не найдены */}
-			{filteredProducts.length === 0 && searchTerm && (
-				<div className={styles.noResults}>
-					<Title level={4} className={styles.noResultsTitle}>Товары не найдены</Title>
-					<Text type="secondary" className={styles.noResultsText}>
-						По запросу "{searchTerm}" ничего не найдено
-					</Text>
-				</div>
-			)}
-
-			{/* Индикатор загрузки следующей страницы */}
-			{isScrollLoading && (
-				<div className={styles.loadingMore}>
-					<Spin size="default" />
-					<Text type="secondary" style={{ marginLeft: 8 }}>Загрузка товаров...</Text>
-				</div>
-			)}
-
-			{/* Элемент для отслеживания скролла */}
-			{hasNextPage && !isScrollLoading && (
-				<div ref={loadMoreRef} className={styles.scrollTrigger} />
-			)}
+			<ProductsGrid
+				products={allProducts}
+				onEdit={onEdit}
+				onDelete={handleDelete}
+				uploadingId={uploadingId}
+				setUploadingId={setUploadingId}
+				isDeleting={isDeleting}
+				hasNextPage={hasNextPage}
+				isFetchingNextPage={isFetchingNextPage}
+				fetchNextPage={fetchNextPage}
+				searchTerm={searchTerm}
+			/>
 
 			{/* Модальное окно подтверждения удаления */}
 			<Modal

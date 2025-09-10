@@ -48,7 +48,22 @@ export class ProductsService {
 
     const sortField = (params.sort as string) || 'createdAt';
     const sortOrder = (params.order || 'DESC').toUpperCase() as 'ASC' | 'DESC';
-    qb.orderBy(`p.${sortField}`, sortOrder);
+    
+    // Специальная обработка для сортировки по скидкам
+    if (sortField === 'discountedPrice') {
+      if (sortOrder === 'DESC') {
+        // Сначала товары с наибольшими скидками (сортировка по убыванию скидки)
+        // Товары с null скидкой будут в конце
+        qb.orderBy('p.discountedPrice', 'DESC', 'NULLS LAST')
+          .addOrderBy('p.price', 'ASC'); // Затем по цене для товаров без скидки
+      } else {
+        // Сначала товары с наименьшими скидками
+        qb.orderBy('p.discountedPrice', 'ASC', 'NULLS LAST')
+          .addOrderBy('p.price', 'DESC');
+      }
+    } else {
+      qb.orderBy(`p.${sortField}`, sortOrder);
+    }
 
     qb.skip((page - 1) * limit).take(limit);
 
