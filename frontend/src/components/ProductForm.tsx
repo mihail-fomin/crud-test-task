@@ -2,7 +2,7 @@ import { Form, Input, InputNumber, Button, Space, message, Upload } from 'antd'
 import { useState } from 'react'
 import { createProduct, updateProduct, uploadProductPhoto, type ProductCreate, type ProductUpdate } from '../features/products/api'
 import { showErrorNotification } from '../utils/errorHandler'
-import { useErrorModal } from '../hooks/useErrorModal'
+import { useErrorModal } from '../hooks/useErrorModal.tsx'
 import type { Product } from '../types/product'
 
 interface ProductFormProps {
@@ -24,6 +24,7 @@ export default function ProductForm({
 	
 	// Используем хук для обработки ошибок
 	const { showErrorModal, ModalComponent } = useErrorModal()
+
 
 	const handlePhotoUpload = async (file: File, productId: number) => {
 		setUploadingPhoto(true)
@@ -96,6 +97,7 @@ export default function ProductForm({
 
 	return (
 		<Form
+			key={product?.id || 'new'}
 			form={form}
 			layout="vertical"
 			onFinish={handleSubmit}
