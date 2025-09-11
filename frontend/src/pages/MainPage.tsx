@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Button, Modal } from 'antd'
+import { useQueryClient } from '@tanstack/react-query'
 import ProductsCatalog from '../components/ProductsCatalog'
 import ProductForm from '../components/ProductForm'
 import type { Product } from '../types/product'
@@ -8,6 +9,7 @@ import styles from './MainPage.module.scss'
 export default function MainPage() {
 	const [isModalOpen, setIsModalOpen] = useState(false)
 	const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+	const queryClient = useQueryClient()
 
 	const handleAdd = () => {
 		setEditingProduct(null)
@@ -25,10 +27,14 @@ export default function MainPage() {
 		setEditingProduct(null)
 	}
 
+	const handleDataChange = () => {
+		// Инвалидируем кэш каталога для автоматического обновления данных
+		queryClient.invalidateQueries({ queryKey: ['catalog-infinite'] })
+		queryClient.invalidateQueries({ queryKey: ['catalog'] })
+	}
+
 	const handleFormSuccess = () => {
 		handleModalClose()
-		// Обновляем каталог товаров
-		window.location.reload()
 	}
 
 
@@ -59,6 +65,7 @@ export default function MainPage() {
 					onSuccess={handleFormSuccess}
 					onCancel={handleModalClose}
 					mode={editingProduct ? 'edit' : 'create'}
+					onDataChange={handleDataChange}
 				/>
 			</Modal>
 		</div>

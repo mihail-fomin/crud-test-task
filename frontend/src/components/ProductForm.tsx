@@ -1,5 +1,5 @@
 import { Form, Input, InputNumber, Button, Space, message, Upload } from 'antd'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createProduct, updateProduct, uploadProductPhoto, type ProductCreate, type ProductUpdate } from '../features/products/api'
 import { showErrorNotification } from '../utils/errorHandler'
 import { useErrorModal } from '../hooks/useErrorModal.tsx'
@@ -10,13 +10,15 @@ interface ProductFormProps {
 	onSuccess?: () => void
 	onCancel?: () => void
 	mode?: 'create' | 'edit' | 'view'
+	onDataChange?: () => void // Callback для обновления данных
 }
 
 export default function ProductForm({ 
 	product, 
 	onSuccess, 
 	onCancel, 
-	mode = 'create' 
+	mode = 'create',
+	onDataChange
 }: ProductFormProps) {
 	const [form] = Form.useForm()
 	const [isSubmitting, setIsSubmitting] = useState(false)
@@ -24,6 +26,23 @@ export default function ProductForm({
 	
 	// Используем хук для обработки ошибок
 	const { showErrorModal, ModalComponent } = useErrorModal()
+
+	// Сбрасываем форму при изменении продукта или режима
+	useEffect(() => {
+		if (mode === 'create' || !product) {
+			// При создании нового товара сбрасываем форму
+			form.resetFields()
+		} else if (product) {
+			// При редактировании устанавливаем значения продукта
+			form.setFieldsValue({
+				name: product.name,
+				description: product.description,
+				price: product.price,
+				discountedPrice: product.discountedPrice,
+				sku: product.sku,
+			})
+		}
+	}, [product, mode, form])
 
 
 	const handlePhotoUpload = async (file: File, productId: number) => {
@@ -60,23 +79,28 @@ export default function ProductForm({
 					sku: values.sku,
 				}
 				
-				await updateProduct(product.id, updateData)
-				message.success('Товар обновлен')
-			} else {
-				// Создание нового товара
-				const createData: ProductCreate = {
-					name: values.name,
-					description: values.description || null,
-					price: values.price,
-					discountedPrice: values.discountedPrice || null,
-					sku: values.sku,
-				}
-				
-				await createProduct(createData)
-				message.success('Товар создан')
+			await updateProduct(product.id, updateData)
+			message.success('Товар обновлен')
+		} else {
+			// Создание нового товара
+			const createData: ProductCreate = {
+				name: values.name,
+				description: values.description || null,
+				price: values.price,
+				discountedPrice: values.discountedPrice || null,
+				sku: values.sku,
 			}
 			
-			onSuccess?.()
+			await createProduct(createData)
+			message.success('Товар создан')
+		}
+		
+		// Сбрасываем форму после успешного сохранения
+		form.resetFields()
+		
+		// Вызываем callback для обновления данных
+		onDataChange?.()
+		onSuccess?.()
 		} catch (error: any) {
 			console.error('Ошибка сохранения товара:', error)
 			

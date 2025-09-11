@@ -62,9 +62,12 @@ export default function CatalogPage() {
 		setIsModalOpen(false)
 	}
 
+	const handleDataChange = () => {
+		refetch()
+	}
+
 	const handleFormSuccess = () => {
 		handleModalClose()
-		refetch()
 	}
 
 	// Обработка ошибок
@@ -156,6 +159,7 @@ export default function CatalogPage() {
 					onSuccess={handleFormSuccess}
 					onCancel={handleModalClose}
 					mode="create"
+					onDataChange={handleDataChange}
 				/>
 			</Modal>
 		</div>
