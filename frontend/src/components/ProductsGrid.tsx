@@ -16,7 +16,6 @@ interface ProductsGridProps {
   hasNextPage?: boolean
   isFetchingNextPage?: boolean
   fetchNextPage?: () => void
-  searchTerm?: string
 }
 
 export default function ProductsGrid({
@@ -28,8 +27,7 @@ export default function ProductsGrid({
   isDeleting,
   hasNextPage,
   isFetchingNextPage,
-  fetchNextPage,
-  searchTerm
+  fetchNextPage
 }: ProductsGridProps) {
   // Хук для бесконечного скролла
   const { loadMoreRef, isLoading: isScrollLoading } = useInfiniteScroll({
@@ -39,12 +37,12 @@ export default function ProductsGrid({
   })
 
   // Сообщение, если товары не найдены
-  if (products.length === 0 && searchTerm) {
+  if (products.length === 0) {
     return (
       <div className={styles.noResults}>
         <Title level={4} className={styles.noResultsTitle}>Товары не найдены</Title>
         <Text type="secondary" className={styles.noResultsText}>
-          По запросу "{searchTerm}" ничего не найдено
+          Товары не найдены
         </Text>
       </div>
     )

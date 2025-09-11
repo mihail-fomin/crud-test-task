@@ -1,0 +1,12 @@
+.searchInput {
+  :global(.ant-input-search-button) {
+    background: linear-gradient(to right, #3b82f6, #8b5cf6) !important;
+    border: none !important;
+    
+    &:hover {
+      background: linear-gradient(to right, #2563eb, #7c3aed) !important;
+    }
+  }
+
+  max-width: 250px;
+}
