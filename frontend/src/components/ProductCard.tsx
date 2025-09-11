@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Card, Button, Typography, message, Modal } from 'antd'
-import { EditOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons'
+import { EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import { deleteProductPhoto, uploadProductPhoto } from '../features/products/api'
 import ProductImage from './ProductImage'
@@ -40,6 +40,7 @@ export default function ProductCard({
         retryCount: 0
     })
     const [deletePhotoModalVisible, setDeletePhotoModalVisible] = useState(false)
+    const [isDeletingPhoto, setIsDeletingPhoto] = useState(false)
 
     const handleProductClick = useCallback((product: Product) => {
         navigate(`/product/${product.id}`)
@@ -100,6 +101,7 @@ export default function ProductCard({
 
     const handleDeletePhotoConfirm = async () => {
         try {
+            setIsDeletingPhoto(true)
             await deleteProductPhoto(product.id)
             message.success('Фото удалено')
             queryClient.invalidateQueries({ queryKey: ['catalog'] })
@@ -108,6 +110,8 @@ export default function ProductCard({
         } catch (error: any) {
             console.error('Ошибка удаления фото:', error)
             showErrorModal(error)
+        } finally {
+            setIsDeletingPhoto(false)
         }
     }
 
@@ -250,7 +254,14 @@ export default function ProductCard({
             onCancel={handleDeletePhotoCancel}
             okText="Удалить"
             cancelText="Отмена"
-            okButtonProps={{ danger: true }}
+            okButtonProps={{ 
+                danger: true,
+                loading: isDeletingPhoto,
+                disabled: isDeletingPhoto
+            }}
+            cancelButtonProps={{
+                disabled: isDeletingPhoto
+            }}
             centered
         >
             <p>Вы уверены, что хотите удалить фотографию товара?</p>
