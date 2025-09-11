@@ -22,10 +22,11 @@ body {
 }
 
 .ant-card-body {
-  padding: 16px !important;
+  padding: 0 !important;
   height: 100%;
   display: flex;
   flex-direction: column;
+  cursor: auto;
 }
 
 .ant-card {
