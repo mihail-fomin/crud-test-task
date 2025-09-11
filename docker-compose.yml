@@ -33,13 +33,6 @@ services:
     volumes:
       - ./backend/uploads:/app/uploads
 
-  frontend:
-    build:
-      context: ./frontend
-    ports:
-      - "80:80"
-    depends_on:
-      - backend
 
 volumes:
   db_data:
