@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsOptional, IsString, IsNumber, IsPositive } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsNumber,
+  IsPositive,
+} from 'class-validator';
 
 export class CreateProductDto {
   @IsString()
@@ -25,5 +31,3 @@ export class CreateProductDto {
   @IsOptional()
   photoUrl?: string | null;
 }
-
-

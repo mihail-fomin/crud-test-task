@@ -45,7 +45,7 @@ export function useSearch() {
 	useEffect(() => {
 		const urlSearchTerm = searchParams.get('q') || ''
 		setSearchTerm(urlSearchTerm)
-	}, []) // Только при монтировании компонента
+	}, [searchParams])
 
 	return {
 		searchTerm,

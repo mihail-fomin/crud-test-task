@@ -30,7 +30,7 @@ export function useInfiniteScroll({
 		window.addEventListener('scroll', handleScroll)
 
 		return () => window.removeEventListener('scroll', handleScroll)
-	}, [fetchNextPage, hasNextPage, isFetchingNextPage, isLoading])
+	}, [fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, threshold])
 
 	useEffect(() => {
 		if (!isFetchingNextPage && isLoading) {

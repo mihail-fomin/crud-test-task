@@ -71,11 +71,9 @@ export default function ProductImage({
 				className={className}
 				style={{ zIndex: 1, width: '100%', height: '100%' }}
 				onError={() => {
-					console.log('Image failed to load:', imageUrl)
 					setImageError(true)
 				}}
 				onLoad={() => {
-					console.log('Image loaded successfully:', imageUrl)
 					setImageLoading(false)
 				}}
 				loading="lazy"

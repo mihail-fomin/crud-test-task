@@ -53,9 +53,8 @@ export default function ProductPage() {
 			await uploadProductPhoto(productId, file)
 			message.success('Фото загружено')
 			queryClient.invalidateQueries({ queryKey: ['product', productId] })
-		} catch (error: any) {
-			console.error('Ошибка загрузки фото:', error)
-			showErrorModal(error)
+		} catch (error: unknown) {
+			showErrorModal(error as { message: string; status?: number })
 		} finally {
 			setUploading(false)
 		}
@@ -71,9 +70,8 @@ export default function ProductPage() {
 			message.success('Фото удалено')
 			queryClient.invalidateQueries({ queryKey: ['product', productId] })
 			setDeletePhotoModalVisible(false)
-		} catch (error: any) {
-			console.error('Ошибка удаления фото:', error)
-			showErrorModal(error)
+		} catch (error: unknown) {
+			showErrorModal(error as { message: string; status?: number })
 		}
 	}
 

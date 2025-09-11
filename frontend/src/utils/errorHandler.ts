@@ -16,10 +16,13 @@ export interface ErrorDetails {
 /**
  * Обрабатывает API ошибки и возвращает детальную информацию для пользователя
  */
-export function handleApiError(error: any): ErrorDetails {
+export function handleApiError(error: unknown): ErrorDetails {
+	// Type assertions for error properties
+	const errorWithStatus = error as { status?: number };
+	const errorWithMessage = error as { message?: string };
 
 	// Сетевые ошибки
-	if (error instanceof TypeError || error.status === 0) {
+	if (error instanceof TypeError || errorWithStatus.status === 0) {
 		return {
 			title: 'Ошибка сети',
 			description: 'Проверьте подключение к интернету и попробуйте снова',
@@ -29,12 +32,12 @@ export function handleApiError(error: any): ErrorDetails {
 	}
 
 	// HTTP ошибки
-	if (error.status) {
-		switch (error.status) {
+	if (errorWithStatus.status) {
+		switch (errorWithStatus.status) {
 			case 400:
 				return {
 					title: 'Некорректный запрос',
-					description: error.message || 'Проверьте правильность введенных данных',
+					description: errorWithMessage.message || 'Проверьте правильность введенных данных',
 					canRetry: false,
 					status: 400
 				}
@@ -69,7 +72,7 @@ export function handleApiError(error: any): ErrorDetails {
 			case 422:
 				return {
 					title: 'Ошибка валидации',
-					description: error.message || 'Проверьте правильность введенных данных',
+					description: errorWithMessage.message || 'Проверьте правильность введенных данных',
 					canRetry: false,
 					status: 422
 				}
@@ -94,20 +97,20 @@ export function handleApiError(error: any): ErrorDetails {
 					title: 'Сервер недоступен',
 					description: 'Сервер временно недоступен. Попробуйте позже',
 					canRetry: true,
-					status: error.status
+					status: errorWithStatus.status
 				}
 			default:
 				return {
 					title: 'Ошибка сервера',
-					description: error.message || `Ошибка ${error.status}: ${error.statusText || 'Неизвестная ошибка'}`,
-					canRetry: error.status >= 500,
-					status: error.status
+					description: errorWithMessage.message || `Ошибка ${errorWithStatus.status}: ${(error as { statusText?: string }).statusText || 'Неизвестная ошибка'}`,
+					canRetry: errorWithStatus.status >= 500,
+					status: errorWithStatus.status
 				}
 		}
 	}
 
 	// Ошибки валидации файлов
-	if (error.message?.includes('размер') || error.message?.includes('size')) {
+	if (errorWithMessage.message?.includes('размер') || errorWithMessage.message?.includes('size')) {
 		return {
 			title: 'Файл слишком большой',
 			description: 'Размер файла не должен превышать 10MB',
@@ -116,7 +119,7 @@ export function handleApiError(error: any): ErrorDetails {
 		}
 	}
 
-	if (error.message?.includes('тип') || error.message?.includes('type')) {
+	if (errorWithMessage.message?.includes('тип') || errorWithMessage.message?.includes('type')) {
 		return {
 			title: 'Неподдерживаемый тип файла',
 			description: 'Пожалуйста, выберите изображение',
@@ -128,7 +131,7 @@ export function handleApiError(error: any): ErrorDetails {
 	// Общая ошибка
 	return {
 		title: 'Произошла ошибка',
-		description: error.message || 'Попробуйте снова позже',
+		description: errorWithMessage.message || 'Попробуйте снова позже',
 		canRetry: true,
 		status: undefined
 	}
@@ -137,7 +140,7 @@ export function handleApiError(error: any): ErrorDetails {
 /**
  * Показывает уведомление об ошибке с возможностью повтора
  */
-export function showErrorNotification(error: any, onRetry?: () => void) {
+export function showErrorNotification(error: unknown, onRetry?: () => void) {
 	const errorDetails = handleApiError(error)
 	
 	// Для критических ошибок используем более заметные уведомления
@@ -171,46 +174,3 @@ export function showErrorNotification(error: any, onRetry?: () => void) {
 	}
 }
 
-/**
- * Показывает случайную модалку для тестирования
- */
-export function showRandomModal() {
-	console.log('showRandomModal called')
-	
-	const modalTypes = ['error', 'warning', 'info', 'success']
-	const randomType = modalTypes[Math.floor(Math.random() * modalTypes.length)]
-	console.log('Random type selected:', randomType)
-	
-	const baseContent = 'Это случайная модалка из errorHandler.\n\nВремя: ' + new Date().toLocaleTimeString() + '\nID: ' + Math.random().toString(36).substr(2, 9)
-	
-	// Временно используем message вместо Modal для тестирования
-	console.log('Using message instead of Modal for testing')
-	
-	if (randomType === 'error') {
-		message.error({
-			content: `🚨 Случайная ошибка!\n\n${baseContent}`,
-			duration: 8,
-			style: { fontSize: '16px', fontWeight: 'bold' }
-		})
-	} else if (randomType === 'warning') {
-		message.warning({
-			content: `⚠️ Случайное предупреждение!\n\n${baseContent}`,
-			duration: 8,
-			style: { fontSize: '16px', fontWeight: 'bold' }
-		})
-	} else if (randomType === 'info') {
-		message.info({
-			content: `ℹ️ Случайная информация\n\n${baseContent}`,
-			duration: 8,
-			style: { fontSize: '16px', fontWeight: 'bold' }
-		})
-	} else if (randomType === 'success') {
-		message.success({
-			content: `✅ Случайный успех!\n\n${baseContent}`,
-			duration: 8,
-			style: { fontSize: '16px', fontWeight: 'bold' }
-		})
-	}
-	
-	console.log('Message shown successfully')
-}

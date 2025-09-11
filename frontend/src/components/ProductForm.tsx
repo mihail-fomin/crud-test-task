@@ -50,12 +50,12 @@ export default function ProductForm({
 		try {
 			await uploadProductPhoto(productId, file)
 			message.success('Фото загружено')
-		} catch (error: any) {
-			console.log('Ошибка загрузки фото:', error)
+		} catch (error: unknown) {
 			// Показываем модалку с ошибкой
+			const errorData = error as { response?: { data?: { message?: string }; status?: number }; message?: string };
 			showErrorModal({
-				message: error.response?.data?.message || error.message || 'Ошибка загрузки файла',
-				status: error.response?.status
+				message: errorData.response?.data?.message || errorData.message || 'Ошибка загрузки файла',
+				status: errorData.response?.status
 			})
 			// Также показываем уведомление для совместимости
 			showErrorNotification(error, () => {
@@ -66,17 +66,17 @@ export default function ProductForm({
 		}
 	}
 
-	const handleSubmit = async (values: any) => {
+	const handleSubmit = async (values: Record<string, unknown>) => {
 		setIsSubmitting(true)
 		try {
 			if (mode === 'edit' && product) {
 				// Обновление существующего товара
 				const updateData: ProductUpdate = {
-					name: values.name,
-					description: values.description || null,
-					price: values.price,
-					discountedPrice: values.discountedPrice || null,
-					sku: values.sku,
+					name: values.name as string,
+					description: (values.description as string) || null,
+					price: values.price as number,
+					discountedPrice: (values.discountedPrice as number) || null,
+					sku: values.sku as string,
 				}
 				
 			await updateProduct(product.id, updateData)
@@ -84,11 +84,11 @@ export default function ProductForm({
 		} else {
 			// Создание нового товара
 			const createData: ProductCreate = {
-				name: values.name,
-				description: values.description || null,
-				price: values.price,
-				discountedPrice: values.discountedPrice || null,
-				sku: values.sku,
+				name: values.name as string,
+				description: (values.description as string) || null,
+				price: values.price as number,
+				discountedPrice: (values.discountedPrice as number) || null,
+				sku: values.sku as string,
 			}
 			
 			await createProduct(createData)
@@ -101,13 +101,12 @@ export default function ProductForm({
 		// Вызываем callback для обновления данных
 		onDataChange?.()
 		onSuccess?.()
-		} catch (error: any) {
-			console.error('Ошибка сохранения товара:', error)
-			
+		} catch (error: unknown) {
 			// Показываем модалку с ошибкой
+			const errorData = error as { response?: { data?: { message?: string }; status?: number }; message?: string };
 			showErrorModal({
-				message: error.response?.data?.message || error.message || 'Ошибка сохранения товара',
-				status: error.response?.status
+				message: errorData.response?.data?.message || errorData.message || 'Ошибка сохранения товара',
+				status: errorData.response?.status
 			})
 			
 			// Также показываем уведомление для совместимости
@@ -166,7 +165,7 @@ export default function ProductForm({
 					style={{ width: '100%' }} 
 					placeholder="0.00"
 					formatter={value => `₽ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-					parser={value => value!.replace(/₽\s?|(,*)/g, '') as any}
+					parser={value => (parseFloat((value || '').replace(/₽\s?|(,*)/g, '')) || 0) as 0}
 				/>
 			</Form.Item>
 			
@@ -192,7 +191,7 @@ export default function ProductForm({
 					style={{ width: '100%' }} 
 					placeholder="0.00"
 					formatter={value => `₽ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-					parser={value => value!.replace(/₽\s?|(,*)/g, '') as any}
+					parser={value => (parseFloat((value || '').replace(/₽\s?|(,*)/g, '')) || 0) as 0}
 				/>
 			</Form.Item>
 			

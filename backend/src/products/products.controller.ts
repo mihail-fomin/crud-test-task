@@ -38,7 +38,15 @@ export class ProductsController {
     @Query('minPrice') minPrice?: number,
     @Query('maxPrice') maxPrice?: number,
   ) {
-    return this.productsService.findAll({ page, limit, sort, order, q, minPrice, maxPrice });
+    return this.productsService.findAll({
+      page,
+      limit,
+      sort,
+      order,
+      q,
+      minPrice,
+      maxPrice,
+    });
   }
 
   @Get(':id')
@@ -78,12 +86,17 @@ export class ProductsController {
       },
     }),
   )
-  async uploadPhoto(@Param('id', ParseIntPipe) id: number, @UploadedFile() file: Express.Multer.File) {
+  async uploadPhoto(
+    @Param('id', ParseIntPipe) id: number,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
     if (!file) {
       throw new Error('Файл не найден');
     }
     const url = `/uploads/${file.filename}`;
-    return this.productsService.update(id, { photoUrl: url } as any);
+    return this.productsService.update(id, {
+      photoUrl: url,
+    } as UpdateProductDto);
   }
 
   @Delete(':id/photo')

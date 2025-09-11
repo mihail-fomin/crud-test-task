@@ -35,7 +35,7 @@ export default function ProductCard({
 }: ProductCardProps) {
     const navigate = useNavigate()
     const queryClient = useQueryClient()
-    const [retryState, setRetryState] = useState<RetryState>({
+    const [_retryState, setRetryState] = useState<RetryState>({
         isRetrying: false,
         retryCount: 0
     })
@@ -83,9 +83,7 @@ export default function ProductCard({
             
             // Сбрасываем счетчик повторов при успехе
             setRetryState({ isRetrying: false, retryCount: 0 })
-        } catch (error: any) {
-            console.error('Ошибка загрузки фото:', error)
-            
+        } catch (error: unknown) {
             // Показываем улучшенное уведомление об ошибке
             showErrorModal(error)
                 
@@ -93,7 +91,7 @@ export default function ProductCard({
             setUploadingId(null)
             setRetryState(prev => ({ ...prev, isRetrying: false }))
         }
-    }, [queryClient, setUploadingId, retryState.retryCount])
+    }, [queryClient, setUploadingId, showErrorModal])
 
     const handleDeletePhotoClick = () => {
         setDeletePhotoModalVisible(true)
@@ -107,8 +105,7 @@ export default function ProductCard({
             queryClient.invalidateQueries({ queryKey: ['catalog'] })
             queryClient.invalidateQueries({ queryKey: ['catalog-infinite'] })
             setDeletePhotoModalVisible(false)
-        } catch (error: any) {
-            console.error('Ошибка удаления фото:', error)
+        } catch (error: unknown) {
             showErrorModal(error)
         } finally {
             setIsDeletingPhoto(false)

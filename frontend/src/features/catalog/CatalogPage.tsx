@@ -1,9 +1,8 @@
-import { Input, Select, Space, Button, Modal, Table, Spin, Alert } from 'antd'
-import { useMemo, useState, useEffect } from 'react'
+import { Input, Select, Space, Button, Modal, Table, Alert } from 'antd'
+import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useInfiniteCatalogQuery } from './hooks'
 import ProductForm from '../../components/ProductForm'
-import { useInView } from 'react-intersection-observer'
 
 export default function CatalogPage() {
 	const [search, setSearch] = useSearchParams()
@@ -15,8 +14,6 @@ export default function CatalogPage() {
 		isLoading,
 		isError,
 		error,
-		hasNextPage,
-		isFetchingNextPage,
 		refetch
 	} = useInfiniteCatalogQuery()
 
@@ -27,12 +24,6 @@ export default function CatalogPage() {
 	const allProducts = useMemo(() => {
 		return data?.pages.flatMap(page => page.data) || []
 	}, [data])
-
-	// Настройка для отслеживания скролла
-	const { ref: loadMoreRef } = useInView({
-		threshold: 0.1,
-		rootMargin: '100px'
-	})
 
 	const columns = useMemo(
 		() => [
@@ -46,7 +37,7 @@ export default function CatalogPage() {
 				title: 'Цена',
 				dataIndex: 'price',
 				key: 'price',
-				render: (value: number, row: any) => (
+				render: (value: number, row: { discountedPrice?: number | null }) => (
 					<Space>
 						<span>{value}</span>
 						{row.discountedPrice != null && <span className="text-red-500">{row.discountedPrice}</span>}
@@ -110,7 +101,11 @@ export default function CatalogPage() {
 					defaultValue={search.get('q') || ''}
 					onSearch={(q) => {
 						const next = new URLSearchParams(search)
-						q ? next.set('q', q) : next.delete('q')
+						if (q) {
+							next.set('q', q)
+						} else {
+							next.delete('q')
+						}
 						// Удаляем page из URL при поиске, чтобы начать с первой страницы
 						next.delete('page')
 						setSearch(next, { replace: true })
@@ -139,7 +134,7 @@ export default function CatalogPage() {
 
 			<Table
 				rowKey="id"
-				columns={columns as any}
+				columns={columns}
 				dataSource={allProducts}
 				pagination={false}
 				loading={isLoading}

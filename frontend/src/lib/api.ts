@@ -1,7 +1,7 @@
 import { getBaseURL } from '../config/api'
 
 // Типы для API ответов
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
 	data: T
 	status: number
 	statusText: string
@@ -87,7 +87,7 @@ class ApiClient {
 		}
 	}
 
-	async get<T>(endpoint: string, params?: Record<string, any>): Promise<ApiResponse<T>> {
+	async get<T>(endpoint: string, params?: Record<string, unknown>): Promise<ApiResponse<T>> {
 		const url = new URL(`${this.baseURL}${endpoint}`)
 		
 		if (params) {
@@ -101,7 +101,7 @@ class ApiClient {
 		return this.request<T>(url.pathname + url.search)
 	}
 
-	async post<T>(endpoint: string, data?: any, options?: RequestInit): Promise<ApiResponse<T>> {
+	async post<T>(endpoint: string, data?: unknown, options?: RequestInit): Promise<ApiResponse<T>> {
 		const isFormData = data instanceof FormData
 		return this.request<T>(endpoint, {
 			method: 'POST',
@@ -111,7 +111,7 @@ class ApiClient {
 		})
 	}
 
-	async put<T>(endpoint: string, data?: any, options?: RequestInit): Promise<ApiResponse<T>> {
+	async put<T>(endpoint: string, data?: unknown, options?: RequestInit): Promise<ApiResponse<T>> {
 		const isFormData = data instanceof FormData
 		return this.request<T>(endpoint, {
 			method: 'PUT',

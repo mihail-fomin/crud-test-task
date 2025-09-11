@@ -6,7 +6,7 @@ import { HttpExceptionFilter } from './filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  
+
   // Настройка CORS
   app.enableCors({
     origin: [
@@ -27,13 +27,13 @@ async function bootstrap() {
     ],
     credentials: true,
   });
-  
+
   // Увеличиваем лимиты для загрузки файлов
   app.use(json({ limit: '50mb' }));
   app.use(urlencoded({ extended: true, limit: '50mb' }));
-  
+
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.useGlobalFilters(new HttpExceptionFilter());
   await app.listen(process.env.PORT ?? 3000);
 }
-bootstrap();
+void bootstrap();

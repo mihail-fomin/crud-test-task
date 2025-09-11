@@ -32,7 +32,6 @@ export function useDeleteProduct(options?: UseDeleteProductOptions): UseDeletePr
 		onMutate: async (deletedId) => {
 			// Устанавливаем состояние удаления для анимации
 			setDeletingId(deletedId)
-			console.log('deleteProductMutation onMutate for id:', deletedId)
 
 			// Отменяем любые исходящие рефетчи
 			await queryClient.cancelQueries({ queryKey: ['catalog-infinite'] })
@@ -41,12 +40,13 @@ export function useDeleteProduct(options?: UseDeleteProductOptions): UseDeletePr
 			const previousData = queryClient.getQueryData(['catalog-infinite'])
 
 			// Оптимистично обновляем данные
-			queryClient.setQueryData(['catalog-infinite'], (old: any) => {
+			queryClient.setQueryData(['catalog-infinite'], (old: unknown) => {
 				if (!old) return old
 				
+				const oldData = old as { pages: Array<{ data: Product[] }> };
 				return {
-					...old,
-					pages: old.pages.map((page: any) => ({
+					...oldData,
+					pages: oldData.pages.map((page: { data: Product[] }) => ({
 						...page,
 						data: page.data.filter((product: Product) => product.id !== deletedId)
 					}))
@@ -89,7 +89,6 @@ export function useDeleteProduct(options?: UseDeleteProductOptions): UseDeletePr
 
 	const confirmDelete = useCallback(() => {
 		if (deleteProduct) {
-			console.log('confirmDelete called for product:', deleteProduct.id)
 			setShowDeleteModal(false)
 			deleteProductMutation.mutate(deleteProduct.id)
 		}

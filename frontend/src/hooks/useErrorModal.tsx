@@ -18,7 +18,6 @@ export function useErrorModal() {
 	const [modalConfig, setModalConfig] = useState<ErrorModalConfig | null>(null)
 
 	const showErrorModal = (error: ErrorData, customConfig?: Partial<ErrorModalConfig>) => {
-        console.log('error: ', error);
 		const defaultConfig: ErrorModalConfig = {
 			title: '🚨 Ошибка',
 			content: error.message,
